@@ -88,6 +88,30 @@ nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.88); 
 .tile-icon.amber { background: #fffbeb; color: #d97706; }
 .tile-icon.red { background: #fef2f2; color: #dc2626; }
 .tile-icon.teal { background: #ecfeff; color: #0891b2; }
+
+/* ---------- 3D DEPTH ---------- */
+.tile { transform-style: preserve-3d; will-change: transform; box-shadow: var(--dx,0px) var(--dy,8px) 24px -14px rgba(15,23,42,.16); }
+.tile::before { content: ''; position: absolute; inset: 0; background: radial-gradient(340px circle at var(--mx,50%) var(--my,-20%), rgba(99,102,241,.15), transparent 62%); opacity: 0; transition: opacity .18s; pointer-events: none; z-index: 1; }
+.tile:hover::before { opacity: 1; }
+.tile > * { position: relative; z-index: 2; }
+.go:active { transform: translateY(2px) scale(.985); }
+.qa-btn:active, .modebtn:active, .ghost:active { transform: translateY(1px); }
+.go, .qa-btn, .modebtn, .ghost { will-change: transform; }
+@keyframes floatY { 0%,100% { transform: translateY(0) rotate(-.4deg); } 50% { transform: translateY(-16px) rotate(.5deg); } }
+.hero3d { display: none; position: absolute; right: 3%; top: 58px; width: 310px; height: 380px; pointer-events: none; z-index: 0; }
+@media (min-width:1080px){ .hero3d { display: block; } }
+.doc-stack { position: absolute; inset: 0; animation: floatY 7s ease-in-out infinite; filter: drop-shadow(0 34px 28px rgba(15,23,42,.17)); }
+.pg { position: absolute; left: 44px; top: 26px; width: 202px; height: 266px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
+.pg.back { background: linear-gradient(160deg,#f8fafc,#edf1f7); transform: rotate(-11deg) translate(-48px,28px); }
+.pg.mid { transform: rotate(-5deg) translate(-19px,11px); box-shadow: 0 2px 10px rgba(15,23,42,.07); }
+.pg.front { transform: rotate(2deg); overflow: hidden; box-shadow: inset 0 -70px 90px -78px rgba(79,70,229,.30), 0 3px 14px rgba(15,23,42,.08); }
+.pg.front .mark { margin: 32px auto 24px; width: 76px; height: 76px; border-radius: 19px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: #fff; font-weight: 800; font-size: 1.55rem; display: grid; place-items: center; letter-spacing: .02em; box-shadow: 0 16px 30px -10px rgba(79,70,229,.55); }
+.pg.front i { display: block; height: 9px; border-radius: 5px; background: #edf0f6; margin: 0 26px 11px; }
+.pg.front i:nth-of-type(1){ width: 68%; background:#dde3ee; }
+.pg.front i:nth-of-type(2){ width: 88%; }
+.pg.front i:nth-of-type(3){ width: 82%; }
+.pg.front i:nth-of-type(4){ width: 91%; }
+.pg.front i:nth-of-type(5){ width: 45%; }
 .tile h3 { font-size: .99rem; font-weight: 650; letter-spacing: -.01em; margin-bottom: 6px; }
 .tile p { font-size: .845rem; color: var(--ink2); line-height: 1.55; }
 
@@ -105,7 +129,7 @@ footer.site { background: #0f172a; color: #94a3b8; margin-top: 20px; }
 .modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: flex-start; justify-content: center; padding: 48px 18px; overflow-y: auto; background: rgba(15, 23, 42, .58); backdrop-filter: blur(6px); }
 .modal.open { display: flex; }
 .box { width: 100%; max-width: 720px; background: #fff; border-radius: 18px; padding: 28px 30px 26px; position: relative; box-shadow: 0 32px 90px rgba(2,6,23,.45); animation: popIn .22s cubic-bezier(.2,.9,.3,1.15); }
-@keyframes popIn { from { transform: translateY(14px) scale(.985); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes popIn { from { transform: perspective(900px) translateY(20px) rotateX(8deg) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fadeUp { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 .mx { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent; color: var(--ink2); font-size: 1.2rem; cursor: pointer; line-height: 1; transition: all .15s; }
 .mx:hover { background: var(--bg-soft); color: var(--ink); }
@@ -174,6 +198,10 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 </div></nav>
 
 <header class="hero">
+    <div class="hero3d" aria-hidden="true"><div class="doc-stack">
+        <div class="pg back"></div><div class="pg mid"></div>
+        <div class="pg front"><div class="mark">AX</div><i></i><i></i><i></i><i></i><i></i></div>
+    </div></div>
     <div class="blob b1"></div><div class="blob b2"></div>
     <h1>Every PDF tool.<br><span>One beautiful workspace.</span></h1>
     <p>Edit, merge, split, organize, recognize text and more — everything processed privately on your own computer.</p>
@@ -1314,6 +1342,23 @@ document.getElementById('dlOcrBtn').onclick = () => {
 };
 
 document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ---- 3D tilt on tool cards (desktop, motion-safe only) ---- */
+(function () {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(pointer: fine)').matches) return;
+    document.querySelectorAll('.tile').forEach(t => {
+        t.addEventListener('mousemove', e => {
+            const r = t.getBoundingClientRect();
+            const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+            t.style.transform = 'perspective(750px) rotateX(' + (-py * 9).toFixed(2) + 'deg) rotateY(' + (px * 11).toFixed(2) + 'deg) translateY(-3px)';
+            t.style.setProperty('--dx', (px * -26).toFixed(1) + 'px');
+            t.style.setProperty('--dy', (py * -18 + 16).toFixed(1) + 'px');
+            t.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+            t.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+        });
+        t.addEventListener('mouseleave', () => { t.style.transform = ''; });
+    });
+})();
 </script>
 </body>
 </html>
