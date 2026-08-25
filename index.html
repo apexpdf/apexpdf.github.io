@@ -224,9 +224,9 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 #eraseOverlay { position: absolute; border: 2px dashed #ef4444; background: rgba(239,68,68,.10); pointer-events: none; display: none; z-index: 5; border-radius: 3px; }
 .holder.mode-erase { cursor: crosshair; }
 .tl { position: absolute; border: 1.2px solid transparent; border-radius: 2px; pointer-events: none; z-index: 3; }
-.holder.mode-replace .tl { pointer-events: auto; cursor: text; }
-.holder.mode-replace .tl:hover { background: rgba(79,70,229,.13); border-color: var(--acc); }
-.tl.sel { background: rgba(124,58,237,.15); border-color: #7c3aed; }
+.holder.mode-replace .tl { pointer-events: auto; cursor: text; border-color: rgba(99,102,241,.55); background: rgba(99,102,241,.055); }
+.holder.mode-replace .tl:hover { background: rgba(99,102,241,.17); border-color: var(--acc); }
+.tl.sel { background: rgba(124,58,237,.18) !important; border-color: #7c3aed !important; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { background: var(--acc-soft); border: 1px solid #dfe4ff; color: var(--acc-hov); padding: 5px 12px; border-radius: 999px; font-size: .77rem; font-weight: 550; display: inline-flex; align-items: center; gap: 8px; }
 .chip button { background: none; border: none; color: var(--err); cursor: pointer; font-weight: 700; font-size: .95rem; padding: 0; line-height: 1; }
@@ -1100,6 +1100,7 @@ async function loadTextLayer(pageProxy, vp) {
     edState.textItems = []; edState.selItem = null; syncRepOpts(false);
     try {
         const tc = await pageProxy.getTextContent();
+        const raw = [];
         for (const it of tc.items) {
             if (!it.str || !it.str.trim() || !it.transform) continue;
             const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
@@ -1114,6 +1115,29 @@ async function loadTextLayer(pageProxy, vp) {
                 sizePt: fh / vp.scale                // font size in PDF points
             };
             if (item.w <= 0.001) continue;
+            raw.push(item);
+        }
+        /* group fragments into full lines (PDFelement-style detection boxes) */
+        raw.sort((a, b) => (a.yBase - b.yBase) || (a.x - b.x));
+        const lines = [];
+        for (const r of raw) {
+            const L = lines.find(l =>
+                Math.abs(l.yBase - r.yBase) < Math.max(l.h, r.h) * 0.6 &&
+                r.x >= l.x - 0.02 && r.x <= l.x + l.w + 0.08
+            );
+            if (L) {
+                const gap = r.x - (L.x + L.w);
+                if (gap > 0.004) L.text += ' ';
+                L.text += r.text.trim();
+                L.w = Math.max(L.w, r.x + r.w - L.x);
+                L.h = Math.max(L.h, r.h);
+                L.sizePt = Math.max(L.sizePt, r.sizePt);
+                L.yBase = (L.yBase + r.yBase) / 2;
+            } else {
+                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt });
+            }
+        }
+        for (const item of lines) {
             item.el = document.createElement('div');
             item.el.className = 'tl';
             item.el.style.left = (item.x * 100) + '%';
@@ -1124,6 +1148,9 @@ async function loadTextLayer(pageProxy, vp) {
             item.el.addEventListener('click', ev => { ev.stopPropagation(); selectTlItem(item); });
             holder.appendChild(item.el);
             edState.textItems.push(item);
+        }
+        if (edState.mode === 'replace' && !lines.length && edMsg.className === 'msg') {
+            edMsg.textContent = 'No selectable text detected on this page (it may be a scan) — use Add Text or Erase Area instead.';
         }
     } catch (e) { /* non-fatal */ }
 }
