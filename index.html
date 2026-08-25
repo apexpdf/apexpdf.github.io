@@ -167,7 +167,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .modebtn { background: #fff; color: var(--ink); border: 1px solid #d3dbe8; border-radius: 999px; padding: 8px 15px; cursor: pointer; font-size: .84rem; font-family: inherit; font-weight: 550; transition: all .15s; }
 .modebtn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
 .modebtn.active:hover { background: var(--acc-hov); }
-.canvas-wrap { position: relative; align-self: stretch; margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; max-height: 68vh; background: #f1f5f9; }
+.canvas-wrap { position: relative; align-self: stretch; margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; max-height: 76vh; background: #f1f5f9; }
+#m-edit .box { max-width: 1160px; }
 .canvas-wrap::-webkit-scrollbar { width: 10px; height: 10px; }
 .canvas-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid #f1f5f9; }
 .canvas-wrap .holder { position: relative; margin: 0 auto; font-size: 0; width: max-content; }
@@ -983,7 +984,7 @@ async function renderPage() {
     const page = await edState.doc.getPage(edState.page + 1);
     const vp1 = page.getViewport({ scale: 1 });
     const fitW = Math.max(280, (holder.parentElement.clientWidth || 640) - 4);
-    const devScale = Math.min(4, Math.max(1, (860 / vp1.width)) * edState.zoom);
+    const devScale = Math.min(4, Math.max(1, (1160 / vp1.width)) * edState.zoom);
     const vp = page.getViewport({ scale: devScale });
     canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
     canvas.style.width = Math.floor(fitW * edState.zoom) + 'px';
