@@ -168,7 +168,54 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .modebtn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
 .modebtn.active:hover { background: var(--acc-hov); }
 .canvas-wrap { position: relative; align-self: stretch; margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; max-height: 76vh; background: #f1f5f9; }
-#m-edit .box { max-width: 1160px; }
+/* ---------- FULLSCREEN EDITOR (PDFelement-style) ---------- */
+#m-edit { padding: 0; align-items: stretch; }
+#m-edit .box { max-width: none; width: 100%; height: 100vh; border-radius: 0; padding: 0; background: #151b26; display: flex; flex-direction: column; animation: none; box-shadow: none; }
+#m-edit .mx { color: #9fb0c8; z-index: 30; font-size: 1.6rem; }
+#m-edit .mx:hover { color: #fff; }
+.ed-top { display: flex; align-items: center; gap: 8px; padding: 10px 52px 10px 14px; background: #1b2330; border-bottom: 1px solid #2a3547; flex: none; }
+.ed-tab { display: flex; align-items: center; gap: 8px; background: #0f141d; border: 1px solid #2a3547; border-radius: 8px; padding: 7px 13px; color: #dfe7f2; font-size: .84rem; font-weight: 600; max-width: 230px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.ed-top .modebtn { background: #232d3d; border-color: #35415a; color: #cfd9e8; }
+.ed-top .modebtn:hover { border-color: #4c5b7a; color: #fff; }
+.ed-top .modebtn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+.ed-top .edk { background: #232d3d; border: 1px solid #35415a; color: #cfd9e8; margin-top: 0; width: auto; }
+.ed-top .edk:hover:not(:disabled) { color: #fff; border-color: #4c5b7a; }
+.ed-top .edk:disabled { opacity: .45; cursor: not-allowed; }
+.ed-top .go.edk { background: var(--acc); border: none; color: #fff; padding: 9px 16px; font-size: .88rem; }
+.ed-top .go.edk:disabled { background: #2a3547; color: #7c8aa0; }
+.ed-strip { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px; background: #1b2330; border-bottom: 1px solid #2a3547; flex: none; }
+.ed-strip .row { margin: 0 !important; }
+.ed-strip .ghost { background: #232d3d; border-color: #35415a; color: #cfd9e8; }
+.ed-strip .ghost:hover { color: #fff; border-color: #4c5b7a; }
+.ed-strip input[type=text], .ed-strip select { background: #0f141d; border-color: #35415a; color: #e5ecf5; }
+.ed-main { flex: 1; display: flex; min-height: 0; }
+.ed-side { width: 148px; flex: none; overflow-y: auto; background: #121826; border-right: 1px solid #2a3547; padding: 14px 10px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.ed-side::-webkit-scrollbar { width: 8px; } .ed-side::-webkit-scrollbar-thumb { background: #2a3547; border-radius: 8px; }
+.thumb { cursor: pointer; border-radius: 8px; padding: 5px; border: 2px solid transparent; transition: border-color .15s, background .15s; text-align: center; }
+.thumb canvas { display: block; border-radius: 4px; box-shadow: 0 3px 10px rgba(0,0,0,.45); background: #fff; }
+.thumb span { display: block; font-size: .72rem; color: #8fa0b8; margin-top: 4px; font-weight: 600; }
+.thumb:hover { background: #1c2534; }
+.thumb.act { border-color: var(--acc); background: #1c2534; }
+.thumb.act span { color: #c7d2fe; }
+#editor { display: none; flex: 1; flex-direction: column; min-height: 0; }
+#editor.open { display: flex; animation: none; }
+.ed-launch { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 24px; }
+.ed-launch .dz { background: #1b2330; border-color: #35415a; width: min(520px, 90%); }
+.ed-launch .dz-label { color: #cfd9e8; }
+.ed-launch .fname { color: #34d399; font-weight: 600; font-size: .88rem; min-height: 1.2em; text-align: center; }
+#editor .canvas-wrap { flex: 1; max-height: none; border: none; border-radius: 0; background: #0d1117; margin-top: 0; }
+#editor .holder canvas { box-shadow: 0 18px 60px rgba(0,0,0,.55); border-radius: 2px; margin: 18px 0; }
+.ed-bottom { display: flex; align-items: center; gap: 18px; padding: 8px 16px; background: #1b2330; border-top: 1px solid #2a3547; flex: none; }
+.ed-bottom .pagenav { display: flex; align-items: center; gap: 8px; }
+.ed-bottom .pagenav button { background: #232d3d; border: 1px solid #35415a; color: #cfd9e8; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: .9rem; }
+.ed-bottom .pagenav button:hover { color: #fff; border-color: #4c5b7a; }
+.ed-bottom #pgLabel, .ed-bottom #zLabel { color: #cfd9e8; font-weight: 700; font-size: .85rem; min-width: 78px; text-align: center; }
+.ed-bottom .msg { flex: 1; text-align: center; margin: 0; font-size: .85rem; }
+.ed-bottom .msg.ok { color: #34d399; }
+.ed-bottom .msg.err { color: #f87171; }
+.ed-bottom .msg.busy { color: #fbbf24; }
+@media (max-width: 880px) { .ed-side { display: none; } .ed-tab { display: none; } }
 .canvas-wrap::-webkit-scrollbar { width: 10px; height: 10px; }
 .canvas-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid #f1f5f9; }
 .canvas-wrap .holder { position: relative; margin: 0 auto; font-size: 0; width: max-content; }
@@ -295,51 +342,53 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 
 <div class="modal" id="m-edit"><div class="box">
     <button class="mx" data-close>&times;</button>
-    <h2>Edit PDF</h2><p class="sub">Click &amp; change: type text and click the page to place it, drag to erase, click any existing text to rewrite. Every change saves instantly.</p>
-    <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
-    <div class="fname"></div>
-    <div id="editor">
-        <div class="toolbar">
-            <div class="pagenav"><button type="button" id="pgPrev">&#8592;</button><span id="pgLabel">Page 1 / 1</span><button type="button" id="pgNext">&#8594;</button></div>
-            <span style="flex:1;"></span>
-            <button type="button" class="modebtn active" id="modeText" onclick="setMode('text')">T&nbsp; Text</button>
-            <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Image</button>
-            <button type="button" class="modebtn" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit existing text</button>
-            <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase area</button>
-        </div>
-        <div class="row" id="repOpts" style="display:none;margin-top:10px;">
+    <div class="ed-top">
+        <div class="ed-tab"><span class="ed-dot"></span><span id="edTabName">Document</span></div>
+        <button type="button" class="modebtn active" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit All</button>
+        <button type="button" class="modebtn" id="modeText" onclick="setMode('text')">T&nbsp; Add Text</button>
+        <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Add Image</button>
+        <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase Area</button>
+        <span style="flex:1;"></span>
+        <button type="button" class="edk" id="undoBtn" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
+        <button class="go edk" id="dlEditedBtn" disabled>Download</button>
+    </div>
+    <div class="ed-strip">
+        <div class="row" id="repOpts" style="display:none;">
             <input type="text" id="repText" placeholder="Rewrite the selected text here">
-            <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid var(--line);border-radius:10px;">
+            <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
             <select id="repWeight" style="max-width:110px;"><option value="">Regular</option><option value="bold">Bold</option></select>
             <button type="button" class="ghost" id="repApply">Replace</button>
             <button type="button" class="ghost" id="repErase" title="Remove this text from the page">Erase</button>
         </div>
-        <div class="row" id="textOpts" style="margin-top:10px;">
-            <input type="text" id="edText" placeholder="Type text, click page, then Add">
+        <div class="row" id="textOpts" style="display:none;">
+            <input type="text" id="edText" placeholder="Type text, then click the page to place it">
             <select id="edSize" style="max-width:105px;"><option value="10">10pt</option><option value="12" selected>12pt</option><option value="16">16pt</option><option value="24">24pt</option><option value="36">36pt</option></select>
             <select id="edWeight" style="max-width:110px;"><option value="">Regular</option><option value="bold">Bold</option></select>
-            <input type="color" id="edColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid var(--line);border-radius:10px;">
+            <input type="color" id="edColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
         </div>
-        <div class="row" id="imageOpts" style="display:none;margin-top:10px;">
-            <input type="file" id="edImage" accept="image/png,image/jpeg" style="font-size:.85rem;color:var(--ink2);">
+        <div class="row" id="imageOpts" style="display:none;">
+            <input type="file" id="edImage" accept="image/png,image/jpeg" style="font-size:.85rem;color:#9fb0c8;">
             <select id="edWidth" style="max-width:150px;"><option value="0.15">15% width</option><option value="0.25" selected>25% width</option><option value="0.5">50% width</option></select>
         </div>
-        <div class="row" id="eraseOpts" style="display:none;margin-top:10px;">
-            <span style="color:var(--ink2);font-size:.87rem;">Drag a box over anything — QR codes, logos, stamps. The area is erased and saved <b>instantly</b>. Made a mistake? Hit Undo.</span>
-        </div>
-        <div class="row" style="justify-content:center;">
-            <button type="button" class="ghost" id="zOut">&#8722;</button>
-            <span id="zLabel" style="font-weight:800;font-size:.88rem;min-width:56px;text-align:center;">Fit 100%</span>
-            <button type="button" class="ghost" id="zIn">+</button>
-            <button type="button" class="ghost" id="zFit">Fit</button>
-        </div>
-        <div class="canvas-wrap"><div class="holder" id="canvasHolder"><canvas id="pageCanvas"></canvas><div id="marker"></div><div id="eraseOverlay"></div></div></div>
-        <div class="row" style="align-items:stretch;margin-top:16px;">
-            <button type="button" class="ghost" id="undoBtn" style="flex:1;margin-top:0;" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
-            <button class="go" id="dlEditedBtn" style="flex:2;margin-top:0;" disabled>Download edited PDF</button>
+        <div class="row" id="eraseOpts" style="display:none;">
+            <span style="color:#9fb0c8;font-size:.87rem;">Drag a box over anything — QR codes, logos, stamps. Erased and saved <b>instantly</b>. Mistake? Hit Undo.</span>
         </div>
     </div>
-    <div class="msg"></div>
+    <div id="editor">
+        <div class="ed-main">
+            <div class="ed-side" id="edThumbs"></div>
+            <div class="canvas-wrap"><div class="holder" id="canvasHolder"><canvas id="pageCanvas"></canvas><div id="marker"></div><div id="eraseOverlay"></div></div></div>
+        </div>
+        <div class="ed-bottom">
+            <div class="pagenav"><button type="button" id="pgPrev">&#8592;</button><span id="pgLabel">Page 1 / 1</span><button type="button" id="pgNext">&#8594;</button></div>
+            <div class="msg"></div>
+            <div class="pagenav"><button type="button" id="zOut">&#8722;</button><span id="zLabel">Fit 100%</span><button type="button" id="zIn">+</button><button type="button" id="zFit">Fit</button></div>
+        </div>
+    </div>
+    <div class="ed-launch" id="dzWrap">
+        <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
+        <div class="fname"></div>
+    </div>
 </div></div>
 
 <div class="modal" id="m-ocr"><div class="box">
@@ -948,7 +997,7 @@ const holder = document.getElementById('canvasHolder');
 const pgLabel = document.getElementById('pgLabel');
 const edMsg = editCard.querySelector('.msg');
 
-let edState = { file: null, doc: null, page: 0, pageCount: 0, mode: 'text', zoom: 1, editedBlob: null, cctx: null, vpScale: 1 };
+let edState = { file: null, doc: null, page: 0, pageCount: 0, mode: 'replace', zoom: 1, editedBlob: null, cctx: null, vpScale: 1 };
 const undoStack = [];
 
 (function wireEditDz() {
@@ -973,9 +1022,12 @@ edInput.addEventListener('change', async () => {
         edState.zoom = 1; zLabel.textContent = 'Fit 100%';
         edState.editedBlob = null; undoStack.length = 0; document.getElementById('undoBtn').disabled = true;
         editor.classList.add('open');
+        document.getElementById('dzWrap').style.display = 'none';
+        document.getElementById('edTabName').textContent = f.name;
         edFname.textContent = f.name + ' — ' + edState.pageCount + ' pages';
         edMsg.textContent = ''; edMsg.className = 'msg';
         await renderPage();
+        buildThumbs();
     } catch (err) { edMsg.textContent = 'Could not open PDF: ' + err.message; edMsg.className = 'msg err'; }
 });
 
@@ -994,7 +1046,40 @@ async function renderPage() {
     edState.cctx = ctx; edState.vpScale = devScale;
     edState.pageWpt = vp1.width; edState.pageHpt = vp1.height;
     updatePgLabel();
+    document.querySelectorAll('#edThumbs .thumb').forEach((t, i) => t.classList.toggle('act', i === edState.page));
     await loadTextLayer(page, vp);
+}
+
+/* ---- page thumbnail sidebar ---- */
+const edThumbsEl = document.getElementById('edThumbs');
+async function buildThumbs() {
+    edThumbsEl.innerHTML = '';
+    if (!edState.doc) return;
+    const n = Math.min(edState.pageCount, 80);
+    for (let i = 0; i < n; i++) {
+        const d = document.createElement('div');
+        d.className = 'thumb' + (i === edState.page ? ' act' : '');
+        const c = document.createElement('canvas');
+        const lab = document.createElement('span'); lab.textContent = i + 1;
+        d.append(c, lab);
+        d.onclick = async () => { if (edState.page !== i) { edState.page = i; await renderPage(); } };
+        edThumbsEl.appendChild(d);
+        paintThumb(c, i);
+    }
+}
+async function paintThumb(c, i) {
+    if (!edState.doc) return;
+    try {
+        const page = await edState.doc.getPage(i + 1);
+        const vp1 = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: 118 / vp1.width });
+        c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+        await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    } catch (e) { /* non-fatal */ }
+}
+async function refreshThumb(i) {
+    const el = edThumbsEl.children[i];
+    if (el) await paintThumb(el.querySelector('canvas'), i);
 }
 
 /* ---- zoom ---- */
@@ -1190,6 +1275,7 @@ async function bakeNow(edit, extraImgs) {
         (extraImgs || []).forEach(o => fd.append(o.key, o.file));
         const out = new Blob([await engineEdit(fd)], { type: 'application/pdf' });
         await reloadFromBlob(out);
+        refreshThumb(edState.page);
         edState.editedBlob = out;
         document.getElementById('dlEditedBtn').disabled = false;
         edFname.textContent = 'Preview updated — ' + edState.pageCount + ' pages';
