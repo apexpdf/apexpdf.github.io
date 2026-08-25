@@ -324,7 +324,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <select id="edWidth" style="max-width:150px;"><option value="0.15">15% width</option><option value="0.25" selected>25% width</option><option value="0.5">50% width</option></select>
         </div>
         <div class="row" id="eraseOpts" style="display:none;margin-top:10px;">
-            <span style="color:var(--ink2);font-size:.87rem;"><b>1.</b> Drag a box over the QR code / image / text &nbsp;<b>2.</b> Press <b>Apply to Preview</b> below — it gets painted white.</span>
+            <span style="color:var(--ink2);font-size:.87rem;">Drag a box over anything — QR codes, logos, stamps. It white-outs <b>instantly</b>; red dashes mark queued areas. Press <b>Apply to Preview</b> to bake it into the PDF.</span>
         </div>
         <div class="chips" id="editList"></div>
         <div class="row"><button type="button" class="ghost" id="addEditBtn">+ Add edit at marker</button></div>
@@ -995,8 +995,68 @@ async function renderPage() {
     const ctx = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     edState.cctx = ctx; edState.vpScale = devScale;
-    drawMarker(); updatePgLabel();
+    edState.pageWpt = vp1.width; edState.pageHpt = vp1.height;
+    drawMarker(); updatePgLabel(); paintEdits();
     await loadTextLayer(page, vp);
+}
+
+/* ---- real-time preview: paint queued edits straight onto the canvas ---- */
+const _imgCache = {};
+function getImgEl(ref, file) {
+    if (_imgCache[ref]) return _imgCache[ref];
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    _imgCache[ref] = img;
+    return img;
+}
+function paintEdits() {
+    const ctx = edState.cctx;
+    if (!ctx || !edState.pageWpt) return;
+    const S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
+    for (const e of edState.edits) {
+        if (e.page !== edState.page) continue;
+        if (e.type === 'erase') {
+            const x1 = Math.min(e.x1, e.x2) * Wpt * S, y1 = Math.min(e.y1, e.y2) * Hpt * S;
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x1, y1, Math.abs(e.x2 - e.x1) * Wpt * S, Math.abs(e.y2 - e.y1) * Hpt * S);
+            ctx.strokeStyle = 'rgba(239,68,68,.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+            ctx.strokeRect(x1 + .75, y1 + .75, Math.abs(e.x2 - e.x1) * Wpt * S - 1.5, Math.abs(e.y2 - e.y1) * Hpt * S - 1.5);
+            ctx.restore();
+        } else if (e.type === 'replace') {
+            const sizePx = (parseFloat(e.size) || 12) * S;
+            const bx = (parseFloat(e.x) || 0) * Wpt * S - 1.5 * S;
+            const by = ((parseFloat(e.y) || 0) * Hpt - 0.94 * (parseFloat(e.size) || 12)) * S;
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(bx, by, Math.min(Wpt, Math.max(2, (parseFloat(e.w) || .1) * Wpt)) * S + 3 * S, sizePx * 1.22);
+            const t = String(e.text == null ? '' : e.text).slice(0, 500);
+            if (t.trim()) {
+                ctx.fillStyle = e.color || '#111111';
+                ctx.font = (e.bold ? 'bold ' : '') + sizePx.toFixed(1) + 'px Helvetica, Arial, sans-serif';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText(t, bx + 1.5 * S, by + sizePx * 1.02);
+            }
+            ctx.restore();
+        } else if (e.type === 'text') {
+            const size = Math.min(96, Math.max(6, parseFloat(e.size) || 12));
+            const sizePx = size * S;
+            ctx.save();
+            ctx.fillStyle = e.color || '#111111';
+            ctx.font = (e.bold ? 'bold ' : '') + sizePx.toFixed(1) + 'px Helvetica, Arial, sans-serif';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(e.text == null ? '' : e.text).slice(0, 500), (parseFloat(e.x) || 0) * Wpt * S, (parseFloat(e.y) || 0) * Hpt * S + sizePx * .5);
+            ctx.restore();
+        } else if (e.type === 'image' && e.imageRef) {
+            const imf = edState.imgFiles[e.imageRef];
+            if (!imf) continue;
+            const img = getImgEl(e.imageRef, imf);
+            const wPx = Math.min(Wpt, Math.max(10, (parseFloat(e.w) || .25) * Wpt)) * S;
+            const hPx = wPx * (img.naturalHeight ? img.naturalHeight / img.naturalWidth : .75);
+            if (!img.complete) { img.onload = paintEdits; continue; }
+            ctx.drawImage(img, (parseFloat(e.x) || 0) * Wpt * S, (parseFloat(e.y) || 0) * Hpt * S, wPx, hPx);
+        }
+    }
 }
 
 /* ---- zoom ---- */
@@ -1081,7 +1141,7 @@ function pushReplaceEdit(newText) {
     it.el.classList.remove('sel'); it.el.style.display = 'none';
     edState.selItem = null; syncRepOpts(false);
     document.getElementById('repText').value = '';
-    renderChips();
+    renderChips(); paintEdits();
 }
 const updatePgLabel = () => pgLabel.textContent = 'Page ' + (edState.page + 1) + ' / ' + edState.pageCount;
 function drawMarker() {
@@ -1133,16 +1193,6 @@ function finishErase() {
     if (Math.abs(d.x2 - d.x1) < 0.006 && Math.abs(d.y2 - d.y1) < 0.006) return;
     edState.edits.push({ type: 'erase', page: edState.page, x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 });
     renderChips();
-    // instant feedback on the preview so it never feels dead
-    if (edState.cctx) {
-        const W = canvas.width, H = canvas.height;
-        edState.cctx.save();
-        edState.cctx.fillStyle = 'rgba(239,68,68,.30)';
-        edState.cctx.fillRect(Math.min(d.x1, d.x2) * W, Math.min(d.y1, d.y2) * H, Math.abs(d.x2 - d.x1) * W, Math.abs(d.y2 - d.y1) * H);
-        edState.cctx.strokeStyle = '#ef4444'; edState.cctx.lineWidth = 2;
-        edState.cctx.strokeRect(Math.min(d.x1, d.x2) * W, Math.min(d.y1, d.y2) * H, Math.abs(d.x2 - d.x1) * W, Math.abs(d.y2 - d.y1) * H);
-        edState.cctx.restore();
-    }
 }
 canvas.addEventListener('pointerup', finishErase);
 canvas.addEventListener('pointercancel', () => { eraseDrag = null; eraseOverlay.style.display = 'none'; });
@@ -1227,11 +1277,11 @@ function addCurrentEdit() {
         edState.edits.push({ type: 'image', page: edState.page, x: edState.pending.x, y: edState.pending.y,
             w: parseFloat(document.getElementById('edWidth').value), imageRef: ref });
     }
-    edState.pending = null; drawMarker(); renderChips();
+    edState.pending = null; drawMarker(); renderChips(); paintEdits();
 }
 function renderChips() {
     editList.innerHTML = '';
-    if (!edState.edits.length) { editList.innerHTML = '<span style="color:#8b97b5;font-size:.8rem;">No edits yet — click the page, fill the options above, then press “+ Add”.</span>'; return; }
+    if (!edState.edits.length) { editList.innerHTML = '<span style="color:#8b97b5;font-size:.8rem;">No edits yet — click the page, fill the options above, then press “+ Add”. Edits appear on the preview instantly.</span>'; return; }
     edState.edits.forEach((e, i) => {
         const chip = document.createElement('span'); chip.className = 'chip';
         const label = e.type === 'text'
@@ -1243,7 +1293,7 @@ function renderChips() {
             : 'P' + (e.page + 1) + ': image';
         chip.append(label);
         const x = document.createElement('button'); x.innerHTML = '&times;';
-        x.onclick = () => { edState.edits.splice(i, 1); renderChips(); };
+        x.onclick = async () => { edState.edits.splice(i, 1); renderChips(); if (edState.doc) await renderPage(); };
         chip.appendChild(x); editList.appendChild(chip);
     });
 }
