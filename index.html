@@ -1117,13 +1117,14 @@ async function loadTextLayer(pageProxy, vp) {
             if (item.w <= 0.001) continue;
             raw.push(item);
         }
-        /* group fragments into full lines (PDFelement-style detection boxes) */
+        /* group fragments into natural text runs — words join, table cells stay separate */
         raw.sort((a, b) => (a.yBase - b.yBase) || (a.x - b.x));
         const lines = [];
         for (const r of raw) {
+            const gapTol = (Math.max(r.sizePt, 8) * 0.9) / vp.width; // ~1 character width
             const L = lines.find(l =>
-                Math.abs(l.yBase - r.yBase) < Math.max(l.h, r.h) * 0.6 &&
-                r.x >= l.x - 0.02 && r.x <= l.x + l.w + 0.08
+                Math.abs(l.yBase - r.yBase) < Math.max(l.h, r.h) * 0.5 &&
+                r.x >= l.x - 0.02 && r.x <= l.x + l.w + gapTol
             );
             if (L) {
                 const gap = r.x - (L.x + L.w);
