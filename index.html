@@ -294,7 +294,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 
 <div class="modal" id="m-edit"><div class="box">
     <button class="mx" data-close>&times;</button>
-    <h2>Edit PDF</h2><p class="sub">“Edit existing text” mode: click any text on the page to rewrite or erase it. Text/Image modes add new content.</p>
+    <h2>Edit PDF</h2><p class="sub">Click &amp; change: type text and click the page to place it, drag to erase, click any existing text to rewrite. Every change saves instantly.</p>
     <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
     <div class="fname"></div>
     <div id="editor">
@@ -324,10 +324,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <select id="edWidth" style="max-width:150px;"><option value="0.15">15% width</option><option value="0.25" selected>25% width</option><option value="0.5">50% width</option></select>
         </div>
         <div class="row" id="eraseOpts" style="display:none;margin-top:10px;">
-            <span style="color:var(--ink2);font-size:.87rem;">Drag a box over anything — QR codes, logos, stamps. It white-outs <b>instantly</b>; red dashes mark queued areas. Press <b>Apply to Preview</b> to bake it into the PDF.</span>
+            <span style="color:var(--ink2);font-size:.87rem;">Drag a box over anything — QR codes, logos, stamps. The area is erased and saved <b>instantly</b>. Made a mistake? Hit Undo.</span>
         </div>
-        <div class="chips" id="editList"></div>
-        <div class="row"><button type="button" class="ghost" id="addEditBtn">+ Add edit at marker</button></div>
         <div class="row" style="justify-content:center;">
             <button type="button" class="ghost" id="zOut">&#8722;</button>
             <span id="zLabel" style="font-weight:800;font-size:.88rem;min-width:56px;text-align:center;">Fit 100%</span>
@@ -336,8 +334,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         </div>
         <div class="canvas-wrap"><div class="holder" id="canvasHolder"><canvas id="pageCanvas"></canvas><div id="marker"></div><div id="eraseOverlay"></div></div></div>
         <div class="row" style="align-items:stretch;margin-top:16px;">
-            <button class="go" id="previewEditsBtn" style="flex:2;margin-top:0;">Apply to Preview</button>
-            <button class="go" id="dlEditedBtn" style="flex:1;margin-top:0;background:var(--acc-soft);color:var(--acc);box-shadow:none;" disabled>Download</button>
+            <button type="button" class="ghost" id="undoBtn" style="flex:1;margin-top:0;" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
+            <button class="go" id="dlEditedBtn" style="flex:2;margin-top:0;" disabled>Download edited PDF</button>
         </div>
     </div>
     <div class="msg"></div>
@@ -944,14 +942,13 @@ const edInput = editCard.querySelector('input[type=file]');
 const edFname = editCard.querySelector('.fname');
 const editor = document.getElementById('editor');
 const canvas = document.getElementById('pageCanvas');
-const marker = document.getElementById('marker');
 const eraseOverlay = document.getElementById('eraseOverlay');
 const holder = document.getElementById('canvasHolder');
 const pgLabel = document.getElementById('pgLabel');
-const editList = document.getElementById('editList');
 const edMsg = editCard.querySelector('.msg');
 
-let edState = { file: null, doc: null, page: 0, pageCount: 0, pending: null, edits: [], imgCount: 0, imgFiles: {}, mode: 'text', zoom: 1, editedBlob: null, cctx: null, vpScale: 1 };
+let edState = { file: null, doc: null, page: 0, pageCount: 0, mode: 'text', zoom: 1, editedBlob: null, cctx: null, vpScale: 1 };
+const undoStack = [];
 
 (function wireEditDz() {
     const dz = editCard.querySelector('.dz');
@@ -971,10 +968,9 @@ edInput.addEventListener('change', async () => {
         edState.file = f;
         edState.doc = await pdfjsLib.getDocument({ data: buf }).promise;
         edState.pageCount = edState.doc.numPages;
-        edState.page = 0; edState.edits = []; edState.pending = null;
+        edState.page = 0;
         edState.zoom = 1; zLabel.textContent = 'Fit 100%';
-        edState.editedBlob = null; document.getElementById('dlEditedBtn').disabled = true;
-        renderChips();
+        edState.editedBlob = null; undoStack.length = 0; document.getElementById('undoBtn').disabled = true;
         editor.classList.add('open');
         edFname.textContent = f.name + ' — ' + edState.pageCount + ' pages';
         edMsg.textContent = ''; edMsg.className = 'msg';
@@ -996,67 +992,8 @@ async function renderPage() {
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     edState.cctx = ctx; edState.vpScale = devScale;
     edState.pageWpt = vp1.width; edState.pageHpt = vp1.height;
-    drawMarker(); updatePgLabel(); paintEdits();
+    updatePgLabel();
     await loadTextLayer(page, vp);
-}
-
-/* ---- real-time preview: paint queued edits straight onto the canvas ---- */
-const _imgCache = {};
-function getImgEl(ref, file) {
-    if (_imgCache[ref]) return _imgCache[ref];
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    _imgCache[ref] = img;
-    return img;
-}
-function paintEdits() {
-    const ctx = edState.cctx;
-    if (!ctx || !edState.pageWpt) return;
-    const S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
-    for (const e of edState.edits) {
-        if (e.page !== edState.page) continue;
-        if (e.type === 'erase') {
-            const x1 = Math.min(e.x1, e.x2) * Wpt * S, y1 = Math.min(e.y1, e.y2) * Hpt * S;
-            ctx.save();
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(x1, y1, Math.abs(e.x2 - e.x1) * Wpt * S, Math.abs(e.y2 - e.y1) * Hpt * S);
-            ctx.strokeStyle = 'rgba(239,68,68,.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-            ctx.strokeRect(x1 + .75, y1 + .75, Math.abs(e.x2 - e.x1) * Wpt * S - 1.5, Math.abs(e.y2 - e.y1) * Hpt * S - 1.5);
-            ctx.restore();
-        } else if (e.type === 'replace') {
-            const sizePx = (parseFloat(e.size) || 12) * S;
-            const bx = (parseFloat(e.x) || 0) * Wpt * S - 1.5 * S;
-            const by = ((parseFloat(e.y) || 0) * Hpt - 0.94 * (parseFloat(e.size) || 12)) * S;
-            ctx.save();
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(bx, by, Math.min(Wpt, Math.max(2, (parseFloat(e.w) || .1) * Wpt)) * S + 3 * S, sizePx * 1.22);
-            const t = String(e.text == null ? '' : e.text).slice(0, 500);
-            if (t.trim()) {
-                ctx.fillStyle = e.color || '#111111';
-                ctx.font = (e.bold ? 'bold ' : '') + sizePx.toFixed(1) + 'px Helvetica, Arial, sans-serif';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillText(t, bx + 1.5 * S, by + sizePx * 1.02);
-            }
-            ctx.restore();
-        } else if (e.type === 'text') {
-            const size = Math.min(96, Math.max(6, parseFloat(e.size) || 12));
-            const sizePx = size * S;
-            ctx.save();
-            ctx.fillStyle = e.color || '#111111';
-            ctx.font = (e.bold ? 'bold ' : '') + sizePx.toFixed(1) + 'px Helvetica, Arial, sans-serif';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(String(e.text == null ? '' : e.text).slice(0, 500), (parseFloat(e.x) || 0) * Wpt * S, (parseFloat(e.y) || 0) * Hpt * S + sizePx * .5);
-            ctx.restore();
-        } else if (e.type === 'image' && e.imageRef) {
-            const imf = edState.imgFiles[e.imageRef];
-            if (!imf) continue;
-            const img = getImgEl(e.imageRef, imf);
-            const wPx = Math.min(Wpt, Math.max(10, (parseFloat(e.w) || .25) * Wpt)) * S;
-            const hPx = wPx * (img.naturalHeight ? img.naturalHeight / img.naturalWidth : .75);
-            if (!img.complete) { img.onload = paintEdits; continue; }
-            ctx.drawImage(img, (parseFloat(e.x) || 0) * Wpt * S, (parseFloat(e.y) || 0) * Hpt * S, wPx, hPx);
-        }
-    }
 }
 
 /* ---- zoom ---- */
@@ -1131,7 +1068,7 @@ function sampleTextColor(item) {
 function pushReplaceEdit(newText) {
     const it = edState.selItem;
     if (!it) { alert('Click a piece of text on the page first.'); return; }
-    edState.edits.push({
+    bakeNow({
         type: 'replace', page: edState.page,
         x: it.x, y: it.yBase, w: it.w, size: it.sizePt,
         text: newText, color: document.getElementById('repColor').value,
@@ -1141,20 +1078,28 @@ function pushReplaceEdit(newText) {
     it.el.classList.remove('sel'); it.el.style.display = 'none';
     edState.selItem = null; syncRepOpts(false);
     document.getElementById('repText').value = '';
-    renderChips(); paintEdits();
 }
 const updatePgLabel = () => pgLabel.textContent = 'Page ' + (edState.page + 1) + ' / ' + edState.pageCount;
-function drawMarker() {
-    if (!edState.pending) { marker.style.display = 'none'; return; }
-    marker.style.left = (edState.pending.x * canvas.clientWidth) + 'px';
-    marker.style.top = (edState.pending.y * canvas.clientHeight) + 'px';
-    marker.style.display = 'block';
-}
 canvas.addEventListener('click', e => {
-    if (edState.mode === 'erase') return;
+    if (!edState.doc || edState.mode === 'erase') return;
     const r = canvas.getBoundingClientRect();
-    edState.pending = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
-    drawMarker();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    if (edState.mode === 'text') {
+        const txt = document.getElementById('edText').value.trim();
+        if (!txt) { alert('Type the text first, then click where it should go.'); return; }
+        bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
+            size: parseFloat(document.getElementById('edSize').value),
+            color: document.getElementById('edColor').value,
+            bold: document.getElementById('edWeight').value === 'bold' });
+        document.getElementById('edText').value = '';
+    } else if (edState.mode === 'image') {
+        const imf = document.getElementById('edImage').files[0];
+        if (!imf) { alert('Choose an image first, then click where it should go.'); return; }
+        bakeNow({ type: 'image', page: edState.page, x, y,
+            w: parseFloat(document.getElementById('edWidth').value), imageRef: 'img0' },
+            [{ key: 'img0', file: imf }]);
+        document.getElementById('edImage').value = '';
+    }
 });
 
 /* ---- erase-area: drag a box over anything (QR codes, logos, stamps…) ---- */
@@ -1191,13 +1136,12 @@ function finishErase() {
     const d = eraseDrag; eraseDrag = null;
     eraseOverlay.style.display = 'none';
     if (Math.abs(d.x2 - d.x1) < 0.006 && Math.abs(d.y2 - d.y1) < 0.006) return;
-    edState.edits.push({ type: 'erase', page: edState.page, x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 });
-    renderChips();
+    bakeNow({ type: 'erase', page: edState.page, x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 });
 }
 canvas.addEventListener('pointerup', finishErase);
 canvas.addEventListener('pointercancel', () => { eraseDrag = null; eraseOverlay.style.display = 'none'; });
-document.getElementById('pgPrev').onclick = async () => { if (edState.page > 0) { edState.page--; edState.pending = null; await renderPage(); } };
-document.getElementById('pgNext').onclick = async () => { if (edState.page < edState.pageCount - 1) { edState.page++; edState.pending = null; await renderPage(); } };
+document.getElementById('pgPrev').onclick = async () => { if (edState.page > 0) { edState.page--; await renderPage(); } };
+document.getElementById('pgNext').onclick = async () => { if (edState.page < edState.pageCount - 1) { edState.page++; await renderPage(); } };
 
 function setMode(m) {
     edState.mode = m;
@@ -1214,90 +1158,67 @@ function setMode(m) {
     if (m !== 'replace' && edState.selItem) { edState.selItem.el.classList.remove('sel'); edState.selItem = null; }
 }
 
-document.getElementById('addEditBtn').onclick = addCurrentEdit;
 document.getElementById('repApply').onclick = () => {
     const t = document.getElementById('repText').value.trim();
     if (!t) { alert('Type the replacement text (or use Erase to remove it).'); return; }
     pushReplaceEdit(t);
 };
 document.getElementById('repErase').onclick = () => pushReplaceEdit('');
-document.getElementById('previewEditsBtn').onclick = async function () {
-    if (!edState.edits.length) { edMsg.textContent = 'Add at least one edit first.'; edMsg.className = 'msg err'; return; }
-    this.disabled = true;
-    edMsg.textContent = 'Applying edits to preview…'; edMsg.className = 'msg busy';
+
+/* ---- instant save engine: bake each change into the PDF immediately ---- */
+async function reloadFromBlob(blob) {
+    const buf = await blob.arrayBuffer();
+    edState.doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    edState.pageCount = edState.doc.numPages;
+    if (edState.page >= edState.pageCount) edState.page = edState.pageCount - 1;
+    edState.selItem = null;
+    edState.file = new File([blob], 'apexpdf-edited.pdf', { type: 'application/pdf' });
+    await renderPage();
+}
+async function bakeNow(edit, extraImgs) {
+    if (!edState.file) return;
+    const undoBtn = document.getElementById('undoBtn');
     try {
+        undoBtn.disabled = true;
+        edMsg.textContent = 'Saving change…'; edMsg.className = 'msg busy';
+        undoStack.push(edState.file);
+        if (undoStack.length > 15) undoStack.shift();
         const fd = new FormData();
         fd.append('file', edState.file);
-        fd.append('edits', JSON.stringify(edState.edits));
-        for (const ref in edState.imgFiles) fd.append(ref, edState.imgFiles[ref]);
-        edState.editedBlob = await buildOutput('edit', fd);
-
-        // Load edited result back into the viewer
-        const buf = await edState.editedBlob.arrayBuffer();
-        edState.doc = await pdfjsLib.getDocument({ data: buf }).promise;
-        edState.pageCount = edState.doc.numPages;
-        if (edState.page >= edState.pageCount) edState.page = edState.pageCount - 1;
-        edState.pending = null; edState.selItem = null;
-        edState.file = new File([edState.editedBlob], 'apexpdf-edited.pdf', { type: 'application/pdf' });
-
-        // Queued edits are now baked in — clear for the next round
-        edState.edits = []; edState.imgFiles = {}; edState.imgCount = 0;
-        renderChips(); syncRepOpts(false);
-
-        await renderPage();
+        fd.append('edits', JSON.stringify([edit]));
+        (extraImgs || []).forEach(o => fd.append(o.key, o.file));
+        const out = new Blob([await engineEdit(fd)], { type: 'application/pdf' });
+        await reloadFromBlob(out);
+        edState.editedBlob = out;
         document.getElementById('dlEditedBtn').disabled = false;
         edFname.textContent = 'Preview updated — ' + edState.pageCount + ' pages';
-        edMsg.textContent = 'Applied! Inspect the result (zoom / page nav), keep editing, or Download.'; edMsg.className = 'msg ok';
+        edMsg.textContent = 'Saved ✓'; edMsg.className = 'msg ok';
+        setTimeout(() => { if (edMsg.textContent === 'Saved ✓') { edMsg.textContent = ''; edMsg.className = 'msg'; } }, 1500);
     } catch (err) { edMsg.textContent = err.message; edMsg.className = 'msg err'; }
-    finally { this.disabled = false; }
+    finally { undoBtn.disabled = !undoStack.length; }
+}
+document.getElementById('undoBtn').onclick = async function () {
+    if (!undoStack.length) return;
+    const prev = undoStack.pop();
+    this.disabled = true;
+    edMsg.textContent = 'Undoing…'; edMsg.className = 'msg busy';
+    try {
+        await reloadFromBlob(prev);
+        edState.editedBlob = prev;
+        document.getElementById('dlEditedBtn').disabled = false;
+        edFname.textContent = 'Preview updated — ' + edState.pageCount + ' pages';
+        edMsg.textContent = 'Undone'; edMsg.className = 'msg ok';
+    } catch (err) { edMsg.textContent = err.message; edMsg.className = 'msg err'; }
+    finally { this.disabled = !undoStack.length; }
 };
 
 document.getElementById('dlEditedBtn').onclick = function () {
-    if (!edState.editedBlob) return;
-    const url = URL.createObjectURL(edState.editedBlob);
+    if (!edState.file) return;
+    const url = URL.createObjectURL(edState.file);
     const a = document.createElement('a'); a.href = url; a.download = 'apexpdf-edited.pdf';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 };
-
-function addCurrentEdit() {
-    if (!edState.pending) { alert('Click on the page first to place the marker.'); return; }
-    if (edState.mode === 'text') {
-        const txt = document.getElementById('edText').value.trim();
-        if (!txt) { alert('Type the text to place.'); return; }
-        edState.edits.push({ type: 'text', page: edState.page, x: edState.pending.x, y: edState.pending.y,
-            text: txt, size: parseFloat(document.getElementById('edSize').value),
-            color: document.getElementById('edColor').value, bold: document.getElementById('edWeight').value === 'bold' });
-        document.getElementById('edText').value = '';
-    } else {
-        const imf = document.getElementById('edImage').files[0];
-        if (!imf) { alert('Choose an image file.'); return; }
-        const ref = 'img' + (edState.imgCount++);
-        edState.imgFiles[ref] = imf;
-        edState.edits.push({ type: 'image', page: edState.page, x: edState.pending.x, y: edState.pending.y,
-            w: parseFloat(document.getElementById('edWidth').value), imageRef: ref });
-    }
-    edState.pending = null; drawMarker(); renderChips(); paintEdits();
-}
-function renderChips() {
-    editList.innerHTML = '';
-    if (!edState.edits.length) { editList.innerHTML = '<span style="color:#8b97b5;font-size:.8rem;">No edits yet — click the page, fill the options above, then press “+ Add”. Edits appear on the preview instantly.</span>'; return; }
-    edState.edits.forEach((e, i) => {
-        const chip = document.createElement('span'); chip.className = 'chip';
-        const label = e.type === 'text'
-            ? 'P' + (e.page + 1) + ': "' + (e.text.length > 18 ? e.text.slice(0, 16) + '…' : e.text) + '"'
-            : e.type === 'replace'
-            ? 'P' + (e.page + 1) + ': "' + (e._orig.length > 14 ? e._orig.slice(0, 12) + '…' : e._orig) + '" → ' + (e.text ? '"' + (e.text.length > 16 ? e.text.slice(0, 14) + '…' : e.text) + '"' : '(erased)')
-            : e.type === 'erase'
-            ? 'P' + (e.page + 1) + ': erase area'
-            : 'P' + (e.page + 1) + ': image';
-        chip.append(label);
-        const x = document.createElement('button'); x.innerHTML = '&times;';
-        x.onclick = async () => { edState.edits.splice(i, 1); renderChips(); if (edState.doc) await renderPage(); };
-        chip.appendChild(x); editList.appendChild(chip);
-    });
-}
-renderChips();
 
 /* ============ OCR ============ */
 const ocrWorkers = {};
