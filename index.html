@@ -228,8 +228,20 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .holder.mode-replace .tl { pointer-events: auto; cursor: text; border-color: rgba(99,102,241,.55); background: rgba(99,102,241,.055); }
 .holder.mode-replace .tl:hover { background: rgba(99,102,241,.17); border-color: var(--acc); }
 .tl.sel { background: rgba(124,58,237,.18) !important; border-color: #7c3aed !important; }
-.tl.editing { cursor: text !important; outline: 2px solid var(--acc); box-shadow: 0 6px 22px rgba(0,0,0,.4); z-index: 12; overflow: visible; white-space: pre-wrap; caret-color: var(--acc); }
-.tl.editing:focus { border-color: var(--acc); }
+.tl.editing { cursor: text !important; background: transparent !important; border: 1.5px dashed var(--acc) !important; box-shadow: 0 6px 22px rgba(0,0,0,.4); z-index: 12; overflow: visible; white-space: pre-wrap; caret-color: var(--acc); height: auto !important; min-height: 1em; }
+.tbox { position: absolute; z-index: 12; white-space: pre; min-width: 8px; border: 1.5px dashed var(--acc); border-radius: 2px; cursor: text; caret-color: var(--acc); padding: 0 1px; }
+.tbox:empty::before { content: 'Type here…'; color: #94a3b8; pointer-events: none; font-size: 14px; }
+#tlBar { position: absolute; z-index: 40; display: none; align-items: center; gap: 3px; background: #1b2330; border: 1px solid #35415a; border-radius: 10px; padding: 4px 6px; box-shadow: 0 10px 30px rgba(0,0,0,.45); font-size: .8rem; }
+#tlBar.show { display: flex; }
+#tlBar .grab { cursor: grab; color: #9fb0c8; padding: 3px 6px; font-size: .95rem; user-select: none; }
+#tlBar .grab:active { cursor: grabbing; }
+#tlBar .tbn { background: #232d3d; border: 1px solid #35415a; color: #cfd9e8; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: .78rem; font-family: inherit; line-height: 1.4; }
+#tlBar .tbn:hover { color: #fff; border-color: #4c5b7a; }
+#tlBar .tbn.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+#tlBar #lbSizeVal { min-width: 30px; text-align: center; color: #e5ecf5; font-weight: 700; }
+#tlBar input[type=color] { width: 36px; height: 27px; padding: 1px 2px; border: 1px solid #35415a; border-radius: 6px; background: #232d3d; cursor: pointer; }
+#tlBar .ok { background: #059669; border-color: #047857; color: #fff; }
+#tlBar .no { background: #7f1d1d; border-color: #991b1b; color: #fecaca; }
 /* ---------- ANNOTATE SUITE (PDFelement-style) ---------- */
 .ed-top { flex-wrap: wrap; }
 .tsep { width: 1px; height: 24px; background: #35415a; margin: 0 3px; flex: none; }
@@ -387,27 +399,7 @@ canvas.sigpad { display: block; width: 100%; height: 200px; touch-action: none; 
             <button type="button" class="ghost" id="srApply">Replace All</button>
             <span style="color:#9fb0c8;font-size:.82rem;">Scans every page; matching lines are rewritten with the same detected font.</span>
         </div>
-        <div class="row" id="repOpts" style="display:none;">
-            <input type="text" id="repText" placeholder="Rewrite the selected text here">
-            <span id="repFontName" style="color:#c7d2fe;font-size:.8rem;font-weight:700;background:#232d3d;border:1px solid #35415a;border-radius:999px;padding:5px 11px;">Font: auto-detect</span>
-            <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
-            <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
-            <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
-            <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
-            <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
-            <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
-            <button type="button" class="ghost fmt" id="repStrike" title="Strikethrough" style="text-decoration:line-through;padding:8px 11px;">S</button>
-            <button type="button" class="ghost fmt" id="repSup" title="Superscript" style="padding:8px 9px;font-size:.8rem;">x&#178;</button>
-            <button type="button" class="ghost fmt" id="repSub" title="Subscript" style="padding:8px 9px;font-size:.8rem;">x&#8322;</button>
-            <select id="repLead" title="Line spacing" style="max-width:96px;"><option value="" selected>Spacing</option><option value="1">1.0</option><option value="1.3">1.3</option><option value="1.6">1.6</option><option value="2">2.0</option></select>
-            <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
-            <select id="repPos" title="Where to place the new text"><option value="same" selected>Same spot (replace)</option><option value="below">Below original (keep it)</option></select>
-            <button type="button" class="ghost fmt" id="repPaint" title="Format painter: copy this line's style, apply to the next line you replace">&#128396;</button>
-            <button type="button" class="ghost" id="repApply">Replace</button>
-            <button type="button" class="ghost" id="repErase" title="Remove this text from the page">Erase</button>
-        </div>
         <div class="row" id="textOpts" style="display:none;">
-            <input type="text" id="edText" placeholder="Type text, then click the page to place it">
             <button type="button" class="ghost fmt" id="edBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="edItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="edUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -418,6 +410,7 @@ canvas.sigpad { display: block; width: 100%; height: 200px; touch-action: none; 
             <select id="edSize" style="max-width:105px;"><option value="10">10pt</option><option value="12" selected>12pt</option><option value="16">16pt</option><option value="24">24pt</option><option value="36">36pt</option></select>
             <select id="edLead" title="Line spacing" style="max-width:96px;"><option value="" selected>Spacing</option><option value="1">1.0</option><option value="1.3">1.3</option><option value="1.6">1.6</option><option value="2">2.0</option></select>
             <input type="color" id="edColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <span style="color:#9fb0c8;font-size:.82rem;">Click the page to drop a text box — type, drag &#8942;&#8942; to move it, &#10003; to save.</span>
         </div>
         <div class="row" id="imageOpts" style="display:none;">
             <input type="file" id="edImage" accept="image/png,image/jpeg" style="font-size:.85rem;color:#9fb0c8;">
@@ -495,7 +488,7 @@ canvas.sigpad { display: block; width: 100%; height: 200px; touch-action: none; 
     <div id="editor">
         <div class="ed-main">
             <div class="ed-side" id="edThumbs"></div>
-            <div class="canvas-wrap"><div class="holder" id="canvasHolder"><canvas id="pageCanvas"></canvas><div id="marker"></div><div id="eraseOverlay"></div></div></div>
+            <div class="canvas-wrap"><div class="holder" id="canvasHolder"><canvas id="pageCanvas"></canvas><div id="marker"></div><div id="eraseOverlay"></div><div id="tlBar" contenteditable="false"><span class="grab" title="Drag to move the text">&#8942;&#8942;</span><button type="button" class="tbn" id="lbSizeDn" title="Smaller">A&#8722;</button><span id="lbSizeVal">12</span><button type="button" class="tbn" id="lbSizeUp" title="Bigger">A+</button><button type="button" class="tbn" id="lbBold" title="Bold" style="font-weight:800;">B</button><button type="button" class="tbn" id="lbItalic" title="Italic"><i>I</i></button><button type="button" class="tbn" id="lbUnder" title="Underline"><u>U</u></button><button type="button" class="tbn" id="lbStrike" title="Strikethrough"><s>S</s></button><button type="button" class="tbn" id="lbSup" title="Superscript">x&#178;</button><button type="button" class="tbn" id="lbSub" title="Subscript">x&#8322;</button><input type="color" id="lbColor" value="#111111" title="Text color"><button type="button" class="tbn" id="lbClear" title="Clear text">&#9003;</button><button type="button" class="tbn ok" id="lbOk" title="Apply (Enter)">&#10003;</button><button type="button" class="tbn no" id="lbNo" title="Cancel (Esc)">&#10005;</button></div></div></div>
         </div>
         <div class="ed-bottom">
             <div class="pagenav"><button type="button" id="pgPrev">&#8592;</button><span id="pgLabel">Page 1 / 1</span><button type="button" id="pgNext">&#8594;</button></div>
@@ -1313,6 +1306,8 @@ edInput.addEventListener('change', async () => {
 
 async function renderPage() {
     if (!edState.doc) return;
+    if (live) { const L = live; live = null; hideTlBar(); L.el.removeEventListener('keydown', liveKeydown); L.el.remove(); }
+    holder.querySelectorAll('.tbox').forEach(n => n.remove());
     const page = await edState.doc.getPage(edState.page + 1);
     const vp1 = page.getViewport({ scale: 1 });
     const fitW = Math.max(280, (holder.parentElement.clientWidth || 640) - 4);
@@ -1392,7 +1387,7 @@ async function buildThumbs() {
         const c = document.createElement('canvas');
         const lab = document.createElement('span'); lab.textContent = i + 1;
         d.append(c, lab);
-        d.onclick = async () => { if (edState.page !== i) { edState.page = i; await renderPage(); } };
+        d.onclick = () => { if (edState.page !== i) gotoPage(i); };
         edThumbsEl.appendChild(d);
         paintThumb(c, i);
     }
@@ -1417,6 +1412,7 @@ const zLabel = document.getElementById('zLabel');
 function setZoom(z) {
     edState.zoom = Math.min(3, Math.max(0.5, z));
     zLabel.textContent = edState.zoom === 1 ? 'Fit 100%' : Math.round(edState.zoom * 100) + '%';
+    if (live) { if (liveHasContent()) commitLive(false); else cancelLive(); }
     if (edState.doc && edState.pageCount) renderPage();
 }
 document.getElementById('zIn').onclick = () => setZoom(edState.zoom + 0.25);
@@ -1476,8 +1472,9 @@ async function extractLines(pageProxy) {
 }
 async function loadTextLayer(pageProxy) {
     holder.querySelectorAll('.tl').forEach(n => n.remove());
+    holder.querySelectorAll('.tbox').forEach(n => n.remove());
     holder.classList.toggle('mode-replace', edState.mode === 'replace');
-    edState.textItems = []; edState.selItem = null; syncRepOpts(false);
+    edState.textItems = [];
     try {
         const lines = await extractLines(pageProxy);
         for (const item of lines) {
@@ -1488,17 +1485,15 @@ async function loadTextLayer(pageProxy) {
             item.el.style.width = (item.w * 100) + '%';
             item.el.style.height = (item.h * 1.15 * 100) + '%';
             item.el.title = item.text;
-            item.el.addEventListener('click', ev => { ev.stopPropagation(); selectTlItem(item); });
+            item.el.addEventListener('click', ev => { ev.stopPropagation(); startLiveEdit(item); });
             holder.appendChild(item.el);
             edState.textItems.push(item);
         }
         if (edState.mode === 'replace' && !lines.length && edMsg.className === 'msg') {
-            edMsg.textContent = 'No selectable text detected on this page (it may be a scan) — use Add Text or Erase Area instead.';
+            edMsg.textContent = 'No selectable text detected on this page (it may be a scan) — use Add Text or Erase / Redact instead.';
         }
     } catch (e) { /* non-fatal */ }
 }
-function syncRepOpts(show) { document.getElementById('repOpts').style.display = show ? 'flex' : 'none'; }
-const setFmt = (id, v) => document.getElementById(id).classList.toggle('on', !!v);
 function classifyFam(raw) {
     const s = (raw || '').toLowerCase();
     if (/mono|courier|consol/.test(s)) return { fam: 'courier', label: 'Courier (mono)' };
@@ -1507,7 +1502,10 @@ function classifyFam(raw) {
     if (/^g_|^\w+_f\d/.test(s)) return { fam: 'helvetica', label: 'Embedded ≈ Helvetica' };
     return { fam: 'helvetica', label: s ? s.slice(0, 18) : 'Helvetica (default)' };
 }
-/* ---- live WYSIWYG preview: page repaints as you type (PDFelement-style) ---- */
+/* ---- on-page live text editor: click a line to rewrite it in place, or click the page in Add Text mode ---- */
+const tlBar = document.getElementById('tlBar');
+let live = null, liveBusy = false;
+const LB_FLAGS = ['Bold', 'Italic', 'Under', 'Strike', 'Sup', 'Sub'];
 let _baseSnap = null;
 function snapshotBase() {
     _baseSnap = document.createElement('canvas');
@@ -1518,71 +1516,208 @@ function restoreBase() {
     if (_baseSnap && _baseSnap.width === canvas.width && edState.cctx) edState.cctx.drawImage(_baseSnap, 0, 0);
 }
 const famCss = f => f === 'times' ? '"Times New Roman",Times,serif' : f === 'courier' ? '"Courier New",Courier,monospace' : 'Helvetica,Arial,sans-serif';
-function previewReplace() {
-    const it = edState.selItem;
-    if (!it || !edState.cctx || !edState.pageWpt) return;
-    if (!_baseSnap || _baseSnap.width !== canvas.width) snapshotBase(); else restoreBase();
-    const ctx = edState.cctx, S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
-    const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
-    const size = (repSizeAdj || (P ? P.size : it.sizePt)) * S;
-    const below = document.getElementById('repPos').value === 'below';
-    const newY = below ? Math.min(0.99, it.yBase + it.sizePt * 1.4 / Hpt) : it.yBase;
-    if (!below) {
+function cssScale() { return canvas.clientWidth / (edState.pageWpt || 1) || 1; }
+function applyLiveStyles() {
+    if (!live) return;
+    const el = live.el, S = cssScale();
+    el.style.fontFamily = famCss(live.fam);
+    el.style.fontSize = (live.size * S).toFixed(1) + 'px';
+    el.style.lineHeight = (live.size * live.lead * S).toFixed(1) + 'px';
+    el.style.color = live.color;
+    el.style.fontWeight = live.bold ? '700' : '400';
+    el.style.fontStyle = live.italic ? 'italic' : 'normal';
+    el.style.textDecoration = ((live.under ? 'underline ' : '') + (live.strike ? 'line-through' : '')).trim();
+    document.getElementById('lbSizeVal').textContent = Math.round(live.size * 10) / 10;
+    LB_FLAGS.forEach(k => document.getElementById('lb' + k).classList.toggle('on', !!live[k.toLowerCase()]));
+    document.getElementById('lbColor').value = live.color;
+}
+function positionTlBar() {
+    if (!live) return;
+    const hr = holder.getBoundingClientRect(), er = live.el.getBoundingClientRect();
+    if (!hr.width || !er.width) return;
+    const barH = tlBar.offsetHeight || 36, barW = tlBar.offsetWidth || 300;
+    let left = er.left - hr.left, top = er.bottom - hr.top + 6;
+    if (top + barH > hr.height - 2) top = Math.max(2, er.top - hr.top - barH - 6);
+    left = Math.max(2, Math.min(left, hr.width - barW - 6));
+    tlBar.style.left = left + 'px'; tlBar.style.top = top + 'px';
+}
+function showTlBar() { tlBar.classList.add('show'); positionTlBar(); }
+function hideTlBar() { tlBar.classList.remove('show'); }
+function liveKeydown(e) {
+    if (!live || e.target !== live.el) return;
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (live.kind === 'replace') { commitLive(true); return; }
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const r = sel.getRangeAt(0);
+        r.deleteContents();
+        const tn = document.createTextNode('\n');
+        r.insertNode(tn);
+        r.setStartAfter(tn); r.collapse(true);
+        sel.removeAllRanges(); sel.addRange(r);
+    } else if (e.key === 'Escape') {
+        e.preventDefault(); e.stopPropagation();
+        cancelLive();
+    } else if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].indexOf(e.key.toLowerCase()) >= 0) {
+        e.preventDefault();
+        const key = { b: 'bold', i: 'italic', u: 'under' }[e.key.toLowerCase()];
+        live[key] = !live[key];
+        applyLiveStyles();
+    }
+}
+function startLiveEdit(item) {
+    if (liveBusy) return;
+    if (live) { if (live.el === item.el) return; commitLive(false); if (liveBusy) return; }
+    live = { kind: 'replace', el: item.el, item, size: item.sizePt, fam: item.fam || 'helvetica',
+        color: sampleTextColor(item), bold: !!item.detBold, italic: !!item.detItalic,
+        under: false, strike: false, sup: false, sub: false, lead: 1.18, moved: false };
+    if (edState.cctx && edState.pageWpt) {   // white-out the original line on the preview so the box is WYSIWYG
+        snapshotBase();
+        const ctx = edState.cctx, S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect((it.x * Wpt - 1.5) * S, (it.yBase * Hpt - 0.94 * it.sizePt) * S, (it.w * Wpt + 3) * S, 1.22 * it.sizePt * S);
+        ctx.fillRect((item.x * Wpt - 1.5) * S, (item.yBase * Hpt - 0.94 * item.sizePt) * S, (item.w * Wpt + 3) * S, 1.22 * item.sizePt * S);
     }
-    const txt = document.getElementById('repText').value;
-    if (!txt.trim()) return;
-    const col = P ? P.color : document.getElementById('repColor').value;
-    const bold = P ? P.bold : fmtState('repBold'), ital = P ? P.italic : fmtState('repItalic');
-    const under = P ? P.underline : fmtState('repUnder'), strike = P ? P.strike : fmtState('repStrike');
-    const sup = P ? P.sup : fmtState('repSup'), sub = P ? P.sub : fmtState('repSub');
-    const lead = Math.max(0.8, Math.min(3, parseFloat(document.getElementById('repLead').value) || 1.18));
-    ctx.save();
-    ctx.fillStyle = col; ctx.textBaseline = 'alphabetic';
-    ctx.font = (ital ? 'italic ' : '') + (bold ? 'bold ' : '') + size.toFixed(1) + 'px ' + famCss(P ? P.fam : it.fam);
-    const maxW = it.w * Wpt * S;
-    const lines = []; let cur = '';
-    for (const w of txt.split(/\s+/)) {
-        const t = cur ? cur + ' ' + w : w;
-        if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
-    }
-    lines.push(cur);
-    let ly = newY * Hpt * S;
-    for (const ln of lines) {
-        let ds = size, dy = 0;
-        if (sup) { ds = size * 0.62; dy = size * 0.33; }
-        else if (sub) { ds = size * 0.62; dy = -size * 0.16; }
-        ctx.fillText(ln, it.x * Wpt * S, ly + dy);
-        const tw = ctx.measureText(ln).width;
-        if (under) ctx.fillRect(it.x * Wpt * S, ly + dy - ds * 0.18, tw, Math.max(0.8, ds * 0.055));
-        if (strike) ctx.fillRect(it.x * Wpt * S, ly + dy + ds * 0.28, tw, Math.max(0.8, ds * 0.055));
-        ly -= size * lead;
-    }
-    ctx.restore();
+    const el = item.el;
+    el.classList.add('editing');
+    el.textContent = item.text;
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+    el.removeAttribute('title');
+    el.addEventListener('keydown', liveKeydown);
+    applyLiveStyles();
+    showTlBar();
+    el.focus();
+    try { const sel = window.getSelection(); sel.removeAllRanges(); const r = document.createRange(); r.selectNodeContents(el); sel.addRange(r); } catch (_) {}
 }
-function selectTlItem(item) {
-    restoreBase(); snapshotBase();
-    if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
-    edState.selItem = item;
-    item.el.classList.add('sel');
-    document.getElementById('repText').value = item.text;
-    const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
-    document.getElementById('repColor').value = P ? P.color : sampleTextColor(item);
-    repSizeAdj = null;
-    document.getElementById('repSizeVal').textContent = Math.round((P ? P.size : item.sizePt) * 10) / 10;
-    setFmt('repBold', P ? P.bold : !!item.detBold);
-    setFmt('repItalic', P ? P.italic : !!item.detItalic);
-    setFmt('repUnder', P ? P.underline : false);
-    setFmt('repStrike', P ? P.strike : false);
-    setFmt('repSup', P ? P.sup : false);
-    setFmt('repSub', P ? P.sub : false);
-    document.getElementById('repFontName').textContent = 'Font: ' + (P ? P.fam : item.famLabel);
-    syncRepOpts(true);
-    previewReplace();
-    const rt = document.getElementById('repText');
-    rt.focus(); rt.select();
+function startAddBox(x, y) {
+    if (liveBusy) return;
+    if (live) { commitLive(false); if (liveBusy) return; }
+    const el = document.createElement('div');
+    el.className = 'tbox';
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+    holder.appendChild(el);
+    live = { kind: 'add', el, size: parseFloat(document.getElementById('edSize').value) || 12,
+        fam: (document.getElementById('edFam') || {}).value || 'helvetica',
+        color: document.getElementById('edColor').value,
+        bold: fmtState('edBold'), italic: fmtState('edItalic'), under: fmtState('edUnder'), strike: fmtState('edStrike'),
+        sup: fmtState('edSup'), sub: fmtState('edSub'),
+        lead: parseFloat(document.getElementById('edLead').value) || 1.18,
+        moved: false };
+    el.style.left = (x * 100) + '%';
+    el.style.top = (y * 100) + '%';
+    el.addEventListener('keydown', liveKeydown);
+    applyLiveStyles();
+    showTlBar();
+    el.focus();
 }
+function liveHasContent() { return !!live && ((((live.el.innerText != null ? live.el.innerText : live.el.textContent) || '').replace(/\n+$/, '').trim().length > 0) || live.moved); }
+function cancelLive() {
+    if (!live) return;
+    const L = live; live = null;
+    hideTlBar();
+    L.el.removeEventListener('keydown', liveKeydown);
+    if (L.kind === 'replace') {
+        L.el.classList.remove('editing');
+        L.el.contentEditable = 'false';
+        L.el.textContent = '';
+        L.el.title = L.item.text;
+        ['fontFamily', 'fontSize', 'lineHeight', 'color', 'fontWeight', 'fontStyle', 'textDecoration'].forEach(p => { L.el.style[p] = ''; });
+    } else {
+        L.el.remove();
+    }
+    restoreBase();
+}
+async function commitLive(explicit) {
+    if (!live || liveBusy) return false;
+    const L = live;
+    const text = ((L.el.innerText != null ? L.el.innerText : L.el.textContent) || '').replace(/\n+$/, '');
+    const empty = !text.trim();
+    if (empty && !L.moved && (!explicit || L.kind === 'add')) { cancelLive(); return false; }
+    if (empty && L.kind === 'replace' && !L.moved && !confirm('Erase this text from the page?')) { cancelLive(); return false; }
+    live = null; liveBusy = true;
+    hideTlBar();
+    L.el.removeEventListener('keydown', liveKeydown);
+    L.el.contentEditable = 'false';
+    L.el.remove();
+    try {
+        const common = { size: L.size, fam: L.fam, color: L.color, bold: L.bold, italic: L.italic,
+            underline: L.under, strike: L.strike, superscript: L.sup, subscript: L.sub, lead: L.lead };
+        let edits;
+        if (L.kind === 'replace') {
+            const it = L.item, Hpt = edState.pageHpt;
+            common.origSize = it.sizePt;
+            if (L.moved) {   // dragged elsewhere: erase the original line, draw the text at the new spot
+                const leftFrac = parseFloat(L.el.style.left) / 100;
+                const topFrac = parseFloat(L.el.style.top) / 100;
+                const wFrac = Math.min(it.w, Math.max(0.05, 1 - leftFrac - 0.01));
+                const newY = Math.min(0.99, topFrac + ((L.lead - 1) / 2 + 0.865) * L.size / Hpt);
+                edits = [
+                    { type: 'erase', page: edState.page, fill: 'white',
+                        x1: Math.max(0, it.x - 0.002), y1: Math.max(0, (it.yBase * Hpt - 0.94 * it.sizePt) / Hpt),
+                        x2: Math.min(1, it.x + it.w + 0.002), y2: Math.min(1, (it.yBase * Hpt + 0.28 * it.sizePt) / Hpt) },
+                    Object.assign({ type: 'replace', page: edState.page, x: leftFrac, w: wFrac, y: newY, text: text || ' ' }, common)
+                ];
+            } else {
+                edits = [Object.assign({ type: 'replace', page: edState.page, x: it.x, w: it.w, y: it.yBase, text }, common)];
+            }
+        } else {
+            const Hpt = edState.pageHpt;
+            const leftFrac = parseFloat(L.el.style.left) / 100;
+            const topFrac = parseFloat(L.el.style.top) / 100;
+            const yParam = Math.min(0.99, topFrac + ((L.lead - 1) / 2 + 1.11) * L.size / Hpt);
+            edits = [Object.assign({ type: 'text', page: edState.page, x: leftFrac, y: yParam, text }, common)];
+        }
+        await bakeMany(edits);
+        return true;
+    } catch (err) {
+        edMsg.textContent = err.message; edMsg.className = 'msg err';
+        return false;
+    } finally { liveBusy = false; }
+}
+/* tlBar controls */
+document.getElementById('lbSizeUp').onclick = () => { if (live) { live.size = Math.min(96, live.size + 1); applyLiveStyles(); } };
+document.getElementById('lbSizeDn').onclick = () => { if (live) { live.size = Math.max(4, live.size - 1); applyLiveStyles(); } };
+LB_FLAGS.forEach(k => {
+    document.getElementById('lb' + k).onclick = () => {
+        if (!live) return;
+        const key = k.toLowerCase();
+        live[key] = !live[key];
+        if (key === 'sup' && live.sup) live.sub = false;
+        if (key === 'sub' && live.sub) live.sup = false;
+        applyLiveStyles();
+    };
+});
+document.getElementById('lbColor').addEventListener('input', function () { if (live) { live.color = this.value; applyLiveStyles(); } });
+document.getElementById('lbClear').onclick = () => { if (live) { live.el.textContent = ''; live.el.focus(); } };
+document.getElementById('lbOk').onclick = () => commitLive(true);
+document.getElementById('lbNo').onclick = () => cancelLive();
+tlBar.addEventListener('pointerdown', e => { if (!e.target.closest('input') && !e.target.classList.contains('grab')) e.preventDefault(); });
+(function () {   // grip: drag the live text box anywhere on the page
+    const grip = tlBar.querySelector('.grab');
+    let dragging = null;
+    grip.addEventListener('pointerdown', e => {
+        if (!live) return;
+        e.preventDefault();
+        try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+        const er = live.el.getBoundingClientRect();
+        dragging = { dx: e.clientX - er.left, dy: e.clientY - er.top };
+    });
+    grip.addEventListener('pointermove', e => {
+        if (!dragging || !live) return;
+        const hr = holder.getBoundingClientRect();
+        const nx = Math.max(0, Math.min(0.98, (e.clientX - dragging.dx - hr.left) / hr.width));
+        const ny = Math.max(0, Math.min(0.98, (e.clientY - dragging.dy - hr.top) / hr.height));
+        live.el.style.left = (nx * 100) + '%';
+        live.el.style.top = (ny * 100) + '%';
+        live.moved = true;
+        positionTlBar();
+    });
+    const drop = () => { dragging = null; };
+    grip.addEventListener('pointerup', drop);
+    grip.addEventListener('pointercancel', drop);
+})();
 function sampleTextColor(item) {
     try {
         const g = edState.cctx.getImageData(
@@ -1609,20 +1744,12 @@ function dataUrlToFile(dataUrl, name) {
 canvas.addEventListener('click', e => {
     if (!edState.doc) return;
     const m = edState.mode;
-    if (m === 'erase' || m === 'highlight' || m === 'shape' || m === 'draw' || m === 'images' || m === 'replace') return;
+    if (m === 'replace') { if (live) commitLive(false); return; }
+    if (m === 'erase' || m === 'highlight' || m === 'shape' || m === 'draw' || m === 'images') return;
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
     if (m === 'text') {
-        const txt = document.getElementById('edText').value.trim();
-        if (!txt) { alert('Type the text first, then click where it should go.'); return; }
-        bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
-            size: parseFloat(document.getElementById('edSize').value),
-            fam: (document.getElementById('edFam') || {}).value || 'helvetica',
-            color: document.getElementById('edColor').value,
-            bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder'),
-            strike: fmtState('edStrike'), superscript: fmtState('edSup'), subscript: fmtState('edSub'),
-            lead: parseFloat(document.getElementById('edLead').value) || 1.18 });
-        document.getElementById('edText').value = '';
+        startAddBox(x, y);
     } else if (m === 'image') {
         const imf = document.getElementById('edImage').files[0];
         if (!imf) { alert('Choose an image first, then click where it should go.'); return; }
@@ -1846,16 +1973,27 @@ canvas.addEventListener('pointercancel', () => {
 });
 document.getElementById('drawWidth').addEventListener('input', function () { document.getElementById('drawWVal').textContent = parseFloat(this.value) + ' pt'; });
 document.getElementById('shapeWidth').addEventListener('input', function () { document.getElementById('shapeWVal').textContent = parseFloat(this.value) + ' pt'; });
-document.getElementById('pgPrev').onclick = async () => { if (edState.page > 0) { edState.page--; await renderPage(); } };
-document.getElementById('pgNext').onclick = async () => { if (edState.page < edState.pageCount - 1) { edState.page++; await renderPage(); } };
+async function gotoPage(i) {   // navigation auto-commits an open text box first
+    if (!edState.doc || i < 0 || i >= edState.pageCount) return;
+    if (live) {
+        const had = liveHasContent();
+        edState.page = i;
+        if (had) { const baked = await commitLive(false); if (baked) return; }
+        else cancelLive();
+    }
+    edState.page = i;
+    await renderPage();
+}
+document.getElementById('pgPrev').onclick = () => gotoPage(edState.page - 1);
+document.getElementById('pgNext').onclick = () => gotoPage(edState.page + 1);
 
 function setMode(m) {
+    if (live && m !== edState.mode) { if (liveHasContent()) commitLive(false); else cancelLive(); }
     edState.mode = m;
     const MODE_DEFS = [['replace', 'modeReplace'], ['text', 'modeText'], ['image', 'modeImage'], ['erase', 'modeErase'], ['images', 'modeImages'], ['highlight', 'modeHighlight'], ['draw', 'modeDraw'], ['shape', 'modeShape'], ['note', 'modeNote'], ['stamp', 'modeStamp'], ['sign', 'modeSign']];
     const MODE_ROWS = { text: 'textOpts', image: 'imageOpts', erase: 'eraseOpts', images: 'imgRow', highlight: 'hlOpts', draw: 'drawOpts', shape: 'shapeOpts', note: 'noteOpts', stamp: 'stampOpts', sign: 'signOpts' };
     for (const [k, id] of MODE_DEFS) document.getElementById(id).classList.toggle('active', k === m);
     for (const k in MODE_ROWS) document.getElementById(MODE_ROWS[k]).style.display = k === m ? 'flex' : 'none';
-    syncRepOpts(m === 'replace' && edState.selItem);
     holder.classList.toggle('mode-replace', m === 'replace');
     holder.classList.toggle('mode-erase', m === 'erase');
     holder.classList.toggle('mode-box', m === 'highlight' || m === 'shape');
@@ -1863,20 +2001,10 @@ function setMode(m) {
     holder.classList.toggle('mode-place', m === 'text' || m === 'image' || m === 'note' || m === 'stamp' || m === 'sign');
     hideBoxPreview();
     boxDrag = null; inkDrag = null;
-    if (m !== 'replace' && edState.selItem) { edState.selItem.el.classList.remove('sel'); edState.selItem = null; }
     if (m !== 'images') { holder.querySelectorAll('.imgr').forEach(n => n.remove()); edState.selImg = null; }
     else if (edState.doc) renderPage();
     if (m === 'note') setTimeout(() => { const n = document.getElementById('noteText'); if (n) n.focus(); }, 60);
 }
-
-document.getElementById('repApply').onclick = () => {
-    const t = document.getElementById('repText').value.trim();
-    if (!t) { alert('Type the replacement text (or use Erase to remove it).'); return; }
-    pushReplaceEdit(t);
-};
-document.getElementById('repText').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('repApply').click(); }
-});
 
 /* ---- Search & Replace across the whole document ---- */
 document.getElementById('srBtn').onclick = () => {
@@ -1931,83 +2059,17 @@ document.getElementById('imgDel').onclick = () => {
     const r = edState.imgRects[edState.selImg];
     bakeNow({ type: 'deleteImage', page: edState.page, rect: r });
 };
-document.getElementById('repErase').onclick = () => pushReplaceEdit('');
-function pushReplaceEdit(newText) {
-    const it = edState.selItem;
-    if (!it) { alert('Click a piece of text on the page first.'); return; }
-    const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
-    const below = document.getElementById('repPos').value === 'below';
-    const lineStep = it.sizePt * 1.4;
-    const newY = below ? Math.min(0.99, it.yBase + lineStep / edState.pageHpt) : it.yBase;
-    bakeNow({
-        type: 'replace', page: edState.page,
-        x: it.x, w: it.w,
-        y: newY,
-        below,
-        origSize: it.sizePt,
-        size: repSizeAdj || (P ? P.size : it.sizePt),
-        text: newText,
-        color: P ? P.color : document.getElementById('repColor').value,
-        fam: P ? P.fam : (it.fam || 'helvetica'),
-        bold: P ? P.bold : fmtState('repBold'),
-        italic: P ? P.italic : fmtState('repItalic'),
-        underline: P ? P.underline : fmtState('repUnder'),
-        strike: P ? P.strike : fmtState('repStrike'),
-        superscript: P ? P.sup : fmtState('repSup'),
-        subscript: P ? P.sub : fmtState('repSub'),
-        lead: P ? P.lead : (parseFloat(document.getElementById('repLead').value) || 1.18),
-        _orig: it.text
-    });
-    it.el.classList.remove('sel'); it.el.style.display = 'none';
-    edState.selItem = null; syncRepOpts(false);
-    document.getElementById('repText').value = '';
-}
-document.getElementById('repPaint').onclick = function () {
-    if (!this.classList.contains('on')) {
-        const it = edState.selItem;
-        if (!it) { alert('Select a line first — its style will be copied, then click any other line and press Replace.'); return; }
-        edState.paintedStyle = {
-            size: repSizeAdj || it.sizePt,
-            color: document.getElementById('repColor').value,
-            fam: it.fam || 'helvetica',
-            bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
-            strike: fmtState('repStrike'), sup: fmtState('repSup'), sub: fmtState('repSub'),
-            lead: parseFloat(document.getElementById('repLead').value) || 1.18
-        };
-        this.classList.add('on');
-        edMsg.textContent = 'Style copied — select another line and press Replace.'; edMsg.className = 'msg ok';
-    } else {
-        edState.paintedStyle = null;
-        this.classList.remove('on');
-    }
-};
-
-/* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
-let repSizeAdj = null;
+/* ---- B/I/U toggles for Add Text defaults (PDFelement-style) ---- */
 const fmtState = id => document.getElementById(id).classList.contains('on');
-['repBold', 'repItalic', 'repUnder', 'repStrike', 'repSup', 'repSub', 'edBold', 'edItalic', 'edUnder', 'edStrike', 'edSup', 'edSub'].forEach(id => {
+['edBold', 'edItalic', 'edUnder', 'edStrike', 'edSup', 'edSub'].forEach(id => {
     document.getElementById(id).onclick = function () {
         this.classList.toggle('on');
-        const pre = id.startsWith('rep') ? 'rep' : 'ed';
         if (this.classList.contains('on')) {
-            if (id.endsWith('Sup')) document.getElementById(pre + 'Sub').classList.remove('on');
-            if (id.endsWith('Sub')) document.getElementById(pre + 'Sup').classList.remove('on');
+            if (id.endsWith('Sup')) document.getElementById('edSub').classList.remove('on');
+            if (id.endsWith('Sub')) document.getElementById('edSup').classList.remove('on');
         }
-        if (edState.selItem && id.startsWith('rep')) previewReplace();
     };
 });
-function stepSize(d) {
-    const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
-    repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
-    document.getElementById('repSizeVal').textContent = repSizeAdj;
-    previewReplace();
-}
-document.getElementById('repSizeDn').onclick = () => stepSize(-1);
-document.getElementById('repSizeUp').onclick = () => stepSize(1);
-document.getElementById('repText').addEventListener('input', previewReplace);
-document.getElementById('repColor').addEventListener('input', () => { if (edState.selItem) previewReplace(); });
-document.getElementById('repLead').addEventListener('change', () => { if (edState.selItem) previewReplace(); });
-document.getElementById('repPos').addEventListener('change', () => { if (edState.selItem) previewReplace(); });
 
 /* ---- instant save engine: bake each change into the PDF immediately ---- */
 async function reloadFromBlob(blob) {
@@ -2015,7 +2077,6 @@ async function reloadFromBlob(blob) {
     edState.doc = await pdfjsLib.getDocument({ data: buf }).promise;
     edState.pageCount = edState.doc.numPages;
     if (edState.page >= edState.pageCount) edState.page = edState.pageCount - 1;
-    edState.selItem = null;
     edState.file = new File([blob], 'apexpdf-edited.pdf', { type: 'application/pdf' });
     await renderPage();
 }
