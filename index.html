@@ -1426,6 +1426,9 @@ const famCss = f => f === 'times' ? '"Times New Roman",Times,serif' : f === 'cou
 function previewReplace() {
     const it = edState.selItem;
     if (!it || !edState.cctx || !edState.pageWpt) return;
+    const txt = document.getElementById('repText').value;
+    /* Keep the source line intact until the user actually starts a replacement. */
+    if (!txt.trim()) return;
     if (!_baseSnap || _baseSnap.width !== canvas.width) snapshotBase(); else restoreBase();
     const ctx = edState.cctx, S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
     const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
@@ -1434,10 +1437,8 @@ function previewReplace() {
     const newY = below ? Math.min(0.99, it.yBase + it.sizePt * 1.4 / Hpt) : it.yBase;
     if (!below) {
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect((it.x * Wpt - 1.5) * S, (it.yBase * Hpt - 0.94 * it.sizePt) * S, (it.w * Wpt + 3) * S, 1.22 * it.sizePt * S);
+        ctx.fillRect((it.x * Wpt - 1.5) * S, (it.yBase * Hpt - 0.94 * it.sizePt) * S, 1.22 * it.sizePt * S);
     }
-    const txt = document.getElementById('repText').value;
-    if (!txt.trim()) return;
     const col = P ? P.color : document.getElementById('repColor').value;
     const bold = P ? P.bold : fmtState('repBold'), ital = P ? P.italic : fmtState('repItalic');
     const under = P ? P.underline : fmtState('repUnder'), strike = P ? P.strike : fmtState('repStrike');
@@ -1471,7 +1472,9 @@ function selectTlItem(item) {
     if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
     edState.selItem = item;
     item.el.classList.add('sel');
-    document.getElementById('repText').value = item.text;
+    const rt = document.getElementById('repText');
+    rt.value = '';
+    rt.placeholder = 'Replace: ' + item.text;
     const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
     document.getElementById('repColor').value = P ? P.color : sampleTextColor(item);
     repSizeAdj = null;
@@ -1484,9 +1487,9 @@ function selectTlItem(item) {
     setFmt('repSub', P ? P.sub : false);
     document.getElementById('repFontName').textContent = 'Font: ' + (P ? P.fam : item.famLabel);
     syncRepOpts(true);
-    previewReplace();
-    const rt = document.getElementById('repText');
-    rt.focus(); rt.select();
+    rt.focus();
+    edMsg.textContent = 'Type a replacement, then click Replace. The original stays visible until you save.';
+    edMsg.className = 'msg';
 }
 function sampleTextColor(item) {
     try {
