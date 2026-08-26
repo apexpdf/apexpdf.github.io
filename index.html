@@ -236,6 +236,48 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { background: var(--acc-soft); border: 1px solid #dfe4ff; color: var(--acc-hov); padding: 5px 12px; border-radius: 999px; font-size: .77rem; font-weight: 550; display: inline-flex; align-items: center; gap: 8px; }
 .chip button { background: none; border: none; color: var(--err); cursor: pointer; font-weight: 700; font-size: .95rem; padding: 0; line-height: 1; }
+
+/* ---------- PRODUCT WORKSPACE PREVIEW ---------- */
+#workspace { scroll-margin-top: 76px; }
+.workspace { position: relative; overflow: hidden; padding: 78px 24px; background: #101827; color: #eef4ff; }
+.workspace::before { content: ''; position: absolute; width: 560px; height: 560px; right: -220px; top: -290px; border-radius: 50%; background: rgba(99,102,241,.22); filter: blur(10px); pointer-events: none; }
+.workspace::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 42px 42px; -webkit-mask-image: linear-gradient(90deg, #000, transparent 80%); mask-image: linear-gradient(90deg, #000, transparent 80%); }
+.workspace-in { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(280px,.82fr) minmax(480px,1.18fr); align-items: center; gap: clamp(40px,7vw,94px); }
+.workspace-kicker { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid rgba(167,180,255,.28); background: rgba(99,102,241,.13); border-radius: 999px; color: #c6d2ff; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.workspace-kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #5eead4; box-shadow: 0 0 0 4px rgba(94,234,212,.12); }
+.workspace-copy h2 { max-width: 470px; margin: 16px 0 14px; font-size: clamp(2rem,4vw,3rem); line-height: 1.08; letter-spacing: -.045em; color: #fff; }
+.workspace-copy > p { max-width: 455px; color: #a9b8ce; font-size: 1rem; line-height: 1.7; }
+.workspace-list { display: grid; gap: 14px; margin: 28px 0; padding: 0; list-style: none; }
+.workspace-list li { display: flex; align-items: flex-start; gap: 11px; color: #d8e1ee; font-size: .91rem; }
+.workspace-list b { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 7px; background: rgba(99,102,241,.24); color: #c7d2fe; font-size: .73rem; }
+.workspace-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.workspace-action { display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1px solid #344159; border-radius: 9px; color: #dce6f5; background: #1a2435; font: 600 .84rem/1 'Inter',system-ui,sans-serif; cursor: pointer; transition: border-color .16s, background .16s, transform .16s; }
+.workspace-action:hover { background: #25324a; border-color: #7584f4; transform: translateY(-1px); }
+.workspace-action i { display: grid; place-items: center; width: 19px; height: 19px; color: #fff; font-size: .74rem; font-style: normal; border-radius: 5px; background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+.workspace-window { min-height: 410px; overflow: hidden; border: 1px solid #36435c; border-radius: 16px; background: #1a2434; box-shadow: 0 30px 70px -22px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.08) inset; }
+.workspace-topbar { height: 48px; display: flex; align-items: center; gap: 7px; padding: 0 16px; border-bottom: 1px solid #344158; background: #202c3e; }
+.workspace-topbar span { width: 9px; height: 9px; border-radius: 50%; background: #56647c; } .workspace-topbar span:first-child { background: #fb7185; } .workspace-topbar span:nth-child(2) { background: #fbbf24; }
+.workspace-tab { display: flex; align-items: center; gap: 8px; margin-left: 9px; padding: 7px 14px; border: 1px solid #42516a; border-bottom-color: #1a2434; border-radius: 8px 8px 0 0; background: #1a2434; color: #dce6f5; font-size: .75rem; font-weight: 600; }
+.workspace-tab::before { content: 'PDF'; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; background: #f05252; color: #fff; font-size: .48rem; font-weight: 800; }
+.workspace-editor { display: grid; grid-template-columns: 104px 1fr 128px; min-height: 361px; }
+.workspace-pages { padding: 16px 13px; border-right: 1px solid #344158; background: #162031; }
+.workspace-pages small { display: block; margin-bottom: 12px; color: #8191aa; font-size: .63rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.page-thumb { position: relative; width: 67px; height: 83px; margin: 0 auto 11px; border: 2px solid transparent; border-radius: 4px; background: #f8fafc; box-shadow: 0 4px 8px rgba(0,0,0,.22); } .page-thumb.active { border-color: #818cf8; }
+.page-thumb::before, .page-thumb::after { content: ''; position: absolute; left: 11px; right: 10px; height: 4px; border-radius: 4px; background: #dbe3ef; } .page-thumb::before { top: 20px; box-shadow: 0 10px 0 #e6ecf4,0 20px 0 #e6ecf4,0 30px 0 #e6ecf4; } .page-thumb::after { top: 58px; right: 24px; background: #c7d2fe; }
+.workspace-paper { position: relative; margin: 23px auto; width: min(270px,72%); min-height: 310px; padding: 38px 27px; overflow: hidden; background: #fff; border-radius: 2px; box-shadow: 0 12px 28px rgba(0,0,0,.23); }
+.workspace-paper .paper-label { display: block; margin-bottom: 12px; color: #6366f1; font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.workspace-paper h3 { margin-bottom: 14px; color: #172033; font-size: 1.03rem; letter-spacing: -.025em; }
+.workspace-paper p { margin: 0 0 9px; color: #66748a; font-family: Georgia,serif; font-size: .67rem; line-height: 1.75; }
+.workspace-paper mark { padding: 1px 2px; color: #374151; background: #dbeafe; }
+.workspace-paper .text-select { position: absolute; left: 23px; right: 35px; top: 150px; height: 34px; border: 1px solid #6366f1; background: rgba(129,140,248,.12); } .workspace-paper .text-select::after { content: 'Edit text'; position: absolute; right: -47px; top: -12px; padding: 4px 6px; border-radius: 5px; background: #6366f1; color: #fff; font: 700 .52rem/1 'Inter',sans-serif; white-space: nowrap; }
+.workspace-panel { padding: 16px 14px; border-left: 1px solid #344158; background: #162031; }
+.workspace-panel b { display: block; margin-bottom: 17px; color: #dde7f4; font-size: .72rem; }
+.workspace-panel label { display: block; margin: 12px 0 6px; color: #91a0b6; font-size: .62rem; font-weight: 600; }
+.workspace-panel .fake-field { height: 26px; padding: 7px; overflow: hidden; border: 1px solid #3b4a63; border-radius: 5px; color: #d3dded; background: #202c3e; font-size: .61rem; white-space: nowrap; text-overflow: ellipsis; }
+.workspace-panel .fake-row { display: flex; gap: 5px; } .workspace-panel .fake-square { width: 25px; height: 25px; border: 1px solid #3b4a63; border-radius: 5px; background: #202c3e; } .workspace-panel .fake-square:first-child { background: #5b62d9; border-color: #8992f7; }
+@media (max-width: 840px) { .workspace { padding: 60px 24px; } .workspace-in { grid-template-columns: 1fr; } .workspace-copy h2 { max-width: 580px; } .workspace-window { max-width: 600px; width: 100%; } }
+@media (max-width: 520px) { .workspace { padding-inline: 16px; } .workspace-editor { grid-template-columns: 78px 1fr; } .workspace-panel { display: none; } .workspace-pages { padding-inline: 6px; } .workspace-paper { width: 78%; margin-top: 20px; } .workspace-topbar { padding-inline: 10px; } .workspace-tab { margin-left: 3px; padding-inline: 8px; max-width: 180px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } }
+
 </style>
 </head>
 <body>
@@ -246,6 +288,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 <nav><div class="nav-in">
     <div class="logo"><div class="logo-mark">AX</div>APEX<span style="color:#4f46e5;">PDF</span></div>
     <div class="nav-links">
+        <a href="#workspace">Workspace</a>
         <a href="#tools">All Tools</a>
         <a href="#" onclick="openModalById('m-privacy');return false;">Privacy</a>
     </div>
@@ -257,8 +300,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <div class="pg front"><div class="mark">AX</div><i></i><i></i><i></i><i></i><i></i></div>
     </div></div>
     <div class="blob b1"></div><div class="blob b2"></div>
-    <h1>Every PDF tool.<br><span>One beautiful workspace.</span></h1>
-    <p>Edit, merge, split, organize, recognize text and more — everything processed privately on your own computer.</p>
+    <h1>More than a PDF editor.<br><span>A workspace that moves with you.</span></h1>
+    <p>Edit, merge, split, organize and recognize text in one focused place — entirely on your own computer.</p>
     <div class="trust">
         <span class="titem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No sign-up required</span>
         <span class="titem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Unlimited free use</span>
@@ -274,6 +317,34 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <div class="quick-actions" id="quickActions"></div>
     </div>
 </header>
+
+<section class="workspace" id="workspace" aria-labelledby="workspace-title">
+    <div class="workspace-in">
+        <div class="workspace-copy">
+            <span class="workspace-kicker">Made for focused document work</span>
+            <h2 id="workspace-title">A real PDF workspace, not a pile of utilities.</h2>
+            <p>Open a document and stay in the same focused flow — edit the words on the page, arrange the pages around it, then export a polished PDF when you are ready.</p>
+            <ul class="workspace-list">
+                <li><b>1</b><span><strong>Open once.</strong> Start from any PDF without creating an account.</span></li>
+                <li><b>2</b><span><strong>Make precise changes.</strong> Edit text, place images and clean up pages in one workspace.</span></li>
+                <li><b>3</b><span><strong>Leave with confidence.</strong> Download a finished file — your document stays on your device.</span></li>
+            </ul>
+            <div class="workspace-actions">
+                <button class="workspace-action" type="button" data-modal-link="edit"><i>✎</i>Open the editor</button>
+                <button class="workspace-action" type="button" data-modal-link="organize"><i>↕</i>Organize pages</button>
+                <button class="workspace-action" type="button" data-modal-link="ocr"><i>◎</i>Recognize text</button>
+            </div>
+        </div>
+        <div class="workspace-window" aria-hidden="true">
+            <div class="workspace-topbar"><span></span><span></span><span></span><div class="workspace-tab">Quarterly-overview.pdf</div></div>
+            <div class="workspace-editor">
+                <aside class="workspace-pages"><small>Pages</small><div class="page-thumb active"></div><div class="page-thumb"></div><div class="page-thumb"></div></aside>
+                <div class="workspace-canvas"><div class="workspace-paper"><span class="paper-label">Company update</span><h3>Moving from ideas to impact</h3><p>Our work starts with a clear picture of what matters most. This quarter, we focused on <mark>turning complex plans into simple, useful experiences.</mark></p><p>That momentum shows up in every team, every customer conversation and every decision we make next.</p><div class="text-select"></div></div></div>
+                <aside class="workspace-panel"><b>Edit text</b><label>Text</label><div class="fake-field">turning complex plans...</div><label>Format</label><div class="fake-row"><div class="fake-square"></div><div class="fake-square"></div><div class="fake-square"></div></div><label>Font size</label><div class="fake-field">16 pt</div></aside>
+            </div>
+        </div>
+    </div>
+</section>
 
 <div class="section-head">
     <span class="eyebrow">All Tools</span>
@@ -1816,7 +1887,7 @@ document.getElementById('runOcrBtn').onclick = async function () {
         ocrResult.value = dataPages.map(p => (dataPages.length > 1 ? '--- Page ' + p.page + ' ---\n' : '') + p.text).join('\n\n').trim() || '(no text found)';
         ocrResult.style.display = 'block';
         document.getElementById('ocrActions').style.display = 'flex';
-        ocrMsg.textContent = 'Done! ' + data.pages.length + ' page(s) recognized (' + data.lang + ').';
+        ocrMsg.textContent = 'Done! ' + dataPages.length + ' page(s) recognized (' + document.getElementById('ocrLang').selectedOptions[0].text + ').';
         ocrMsg.className = 'msg ok';
     } catch (err) { ocrMsg.textContent = err.message; ocrMsg.className = 'msg err'; }
     finally { btn.disabled = false; }
