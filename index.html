@@ -1346,7 +1346,7 @@ function pushReplaceEdit(newText) {
     if (!it) { alert('Click a piece of text on the page first.'); return; }
     const below = document.getElementById('repPos').value === 'below';
     const lineStep = it.sizePt * 1.4;
-    const newY = below ? Math.max(0.01, it.yBase - lineStep / edState.pageHpt) : it.yBase;
+    const newY = below ? Math.min(0.99, it.yBase + lineStep / edState.pageHpt) : it.yBase;
     bakeNow({
         type: 'replace', page: edState.page,
         x: it.x, w: it.w,
