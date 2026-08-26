@@ -358,6 +358,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <div class="ed-strip">
         <div class="row" id="repOpts" style="display:none;">
             <span style="color:#9fb0c8;font-size:.82rem;">Editing on the page — press <b>Enter</b> or click outside to save · Esc cancels</span>
+            <span id="repFontName" style="color:#c7d2fe;font-size:.8rem;font-weight:700;background:#232d3d;border:1px solid #35415a;border-radius:999px;padding:5px 11px;">Font: auto-detect</span>
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
@@ -372,6 +373,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="edBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="edItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="edUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
+            <select id="edFam" style="max-width:130px;"><option value="helvetica" selected>Helvetica</option><option value="times">Times</option><option value="courier">Courier</option></select>
             <select id="edSize" style="max-width:105px;"><option value="10">10pt</option><option value="12" selected>12pt</option><option value="16">16pt</option><option value="24">24pt</option><option value="36">36pt</option></select>
             <input type="color" id="edColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
         </div>
@@ -636,11 +638,14 @@ async function engineEdit(fd) {
     for (const key of fd.keys()) if (/^img\d+$/.test(key)) imgMap[key] = fd.get(key);
     const doc = await _loadPdf(await file.arrayBuffer());
     const pages = doc.getPages();
-    const fontR = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-    const fontB = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-    const fontI = await doc.embedFont(PDFLib.StandardFonts.HelveticaOblique);
-    const fontBI = await doc.embedFont(PDFLib.StandardFonts.HelveticaBoldOblique);
-    const pickFont = e => e.bold && e.italic ? fontBI : e.bold ? fontB : e.italic ? fontI : fontR;
+    const _fc = {};
+    const pickFont = async e => {
+        const fam = e.fam === 'times' ? 'Times' : e.fam === 'courier' ? 'Courier' : 'Helvetica';
+        const suffix = e.bold && e.italic ? 'BoldItalic' : e.bold ? 'Bold' : e.italic ? 'Italic' : '';
+        const key = fam + (suffix || (fam === 'Times' ? 'Roman' : ''));
+        if (!_fc[key]) _fc[key] = await doc.embedFont(PDFLib.StandardFonts[key]);
+        return _fc[key];
+    };
     const wrapText = (text, f, size, maxW) => {
         const out = [];
         for (const para of String(text).split(/\r?\n/)) {
@@ -672,7 +677,7 @@ async function engineEdit(fd) {
             page.drawRectangle({ x: px - 1.5, y: baseY - size * 0.28, width: cw + 3, height: size * 1.22, color: PDFLib.rgb(1, 1, 1) });
             const newText = String(e.text == null ? '' : e.text).slice(0, 800);
             if (newText.trim().length) {
-                const f = pickFont(e);
+                const f = await pickFont(e);
                 const col = hexToRgb(e.color || '#111111');
                 let ly = baseY;
                 for (const ln of wrapText(newText, f, size, cw)) {
@@ -683,7 +688,7 @@ async function engineEdit(fd) {
             }
         } else if (e.type === 'text') {
             const size = Math.min(96, Math.max(6, parseFloat(e.size) || 12));
-            const f = pickFont(e);
+            const f = await pickFont(e);
             const col = hexToRgb(e.color);
             const cw2 = Math.max(40, width - px - 16);
             let ly = py - size * 0.3;
@@ -1157,7 +1162,8 @@ async function loadTextLayer(pageProxy, vp) {
                 yBase: tx[5] / vp.height,            // baseline, fraction from top
                 w: ((it.width || 0) * vp.scale) / vp.width,
                 h: fh / vp.height,
-                sizePt: fh / vp.scale                // font size in PDF points
+                sizePt: fh / vp.scale,               // font size in PDF points
+                famRaw: ((tc.styles || {})[it.fontName] || {}).fontFamily || ''
             };
             if (item.w <= 0.001) continue;
             raw.push(item);
@@ -1180,10 +1186,15 @@ async function loadTextLayer(pageProxy, vp) {
                 L.sizePt = Math.max(L.sizePt, r.sizePt);
                 L.yBase = (L.yBase + r.yBase) / 2;
             } else {
-                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt });
+                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt, famRaw: r.famRaw || '' });
             }
         }
         for (const item of lines) {
+            const cls = classifyFam(item.famRaw);
+            item.fam = cls.fam;
+            item.famLabel = cls.label;
+            item.detBold = /bold|black|heavy/.test(item.famRaw);
+            item.detItalic = /italic|oblique/.test(item.famRaw);
             item.el = document.createElement('div');
             item.el.className = 'tl';
             item.el.style.left = (item.x * 100) + '%';
@@ -1206,6 +1217,15 @@ async function loadTextLayer(pageProxy, vp) {
     } catch (e) { /* non-fatal */ }
 }
 function syncRepOpts(show) { document.getElementById('repOpts').style.display = show ? 'flex' : 'none'; }
+const setFmt = (id, v) => document.getElementById(id).classList.toggle('on', !!v);
+function classifyFam(raw) {
+    const s = (raw || '').toLowerCase();
+    if (/mono|courier|consol/.test(s)) return { fam: 'courier', label: 'Courier (mono)' };
+    if (/(^|[^s])serif/.test(s) || /times|georgia|garamond|cambria|roman|book/.test(s)) return { fam: 'times', label: 'Times (serif)' };
+    if (/sans|arial|helvet|calibri|verdana|segoe|roboto/.test(s)) return { fam: 'helvetica', label: 'Helvetica (sans)' };
+    if (/^g_|^\w+_f\d/.test(s)) return { fam: 'helvetica', label: 'Embedded ≈ Helvetica' };
+    return { fam: 'helvetica', label: s ? s.slice(0, 18) : 'Helvetica (default)' };
+}
 function resetTlStyle(item) {
     const el = item.el;
     el.style.left = (item.x * 100) + '%';
@@ -1236,6 +1256,10 @@ function startInlineEdit(item) {
     el.style.lineHeight = '1.15';
     repSizeAdj = null;
     document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
+    setFmt('repBold', !!item.detBold);
+    setFmt('repItalic', !!item.detItalic);
+    setFmt('repUnder', false);
+    document.getElementById('repFontName').textContent = 'Font: ' + item.famLabel;
     refreshEditingStyle();
     el.focus();
     const range = document.createRange(); range.selectNodeContents(el); range.collapse(false);
@@ -1264,6 +1288,7 @@ function commitInlineEdit() {
         x: it.x, y: it.yBase, w: it.w,
         size: usedSize,
         text: newText, color: col,
+        fam: it.fam || 'helvetica',
         bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
         _orig: it.text
     });
@@ -1292,6 +1317,7 @@ canvas.addEventListener('click', e => {
         if (!txt) { alert('Type the text first, then click where it should go.'); return; }
         bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
             size: parseFloat(document.getElementById('edSize').value),
+            fam: (document.getElementById('edFam') || {}).value || 'helvetica',
             color: document.getElementById('edColor').value,
             bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder') });
         document.getElementById('edText').value = '';
