@@ -10,7 +10,7 @@
 <meta property="og:description" content="Edit existing PDF text, merge, split, OCR and more. Processed in memory — files are never stored.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#4f46e5">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d6bff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='26' font-weight='900' fill='white' text-anchor='middle'%3EAX%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6782833833975102" crossorigin="anonymous"></script><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d6bff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='26' font-weight='900' fill='white' text-anchor='middle'%3EAX%3C/text%3E%3C/svg%3E">
 <style>/* ============ APEXPDF DESIGN SYSTEM v2 ============ */
 :root {
     --acc: #4f46e5;
@@ -188,6 +188,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .ed-strip .row { margin: 0 !important; }
 .ed-strip .ghost { background: #232d3d; border-color: #35415a; color: #cfd9e8; }
 .ed-strip .ghost:hover { color: #fff; border-color: #4c5b7a; }
+.fmt.on { background: var(--acc) !important; border-color: var(--acc) !important; color: #fff !important; }
 .ed-strip input[type=text], .ed-strip select { background: #0f141d; border-color: #35415a; color: #e5ecf5; }
 .ed-main { flex: 1; display: flex; min-height: 0; }
 .ed-side { width: 148px; flex: none; overflow-y: auto; background: #121826; border-right: 1px solid #2a3547; padding: 14px 10px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
@@ -355,15 +356,22 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <div class="ed-strip">
         <div class="row" id="repOpts" style="display:none;">
             <input type="text" id="repText" placeholder="Rewrite the selected text here">
+            <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
+            <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
+            <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
+            <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
+            <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
+            <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
-            <select id="repWeight" style="max-width:110px;"><option value="">Regular</option><option value="bold">Bold</option></select>
             <button type="button" class="ghost" id="repApply">Replace</button>
             <button type="button" class="ghost" id="repErase" title="Remove this text from the page">Erase</button>
         </div>
         <div class="row" id="textOpts" style="display:none;">
             <input type="text" id="edText" placeholder="Type text, then click the page to place it">
+            <button type="button" class="ghost fmt" id="edBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
+            <button type="button" class="ghost fmt" id="edItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
+            <button type="button" class="ghost fmt" id="edUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <select id="edSize" style="max-width:105px;"><option value="10">10pt</option><option value="12" selected>12pt</option><option value="16">16pt</option><option value="24">24pt</option><option value="36">36pt</option></select>
-            <select id="edWeight" style="max-width:110px;"><option value="">Regular</option><option value="bold">Bold</option></select>
             <input type="color" id="edColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
         </div>
         <div class="row" id="imageOpts" style="display:none;">
@@ -627,8 +635,29 @@ async function engineEdit(fd) {
     for (const key of fd.keys()) if (/^img\d+$/.test(key)) imgMap[key] = fd.get(key);
     const doc = await _loadPdf(await file.arrayBuffer());
     const pages = doc.getPages();
-    const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-    const boldFont = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const fontR = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const fontB = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const fontI = await doc.embedFont(PDFLib.StandardFonts.HelveticaOblique);
+    const fontBI = await doc.embedFont(PDFLib.StandardFonts.HelveticaBoldOblique);
+    const pickFont = e => e.bold && e.italic ? fontBI : e.bold ? fontB : e.italic ? fontI : fontR;
+    const wrapText = (text, f, size, maxW) => {
+        const out = [];
+        for (const para of String(text).split(/\r?\n/)) {
+            let line = '';
+            for (const w of para.split(/\s+/)) {
+                if (!w) continue;
+                const test = line ? line + ' ' + w : w;
+                if (f.widthOfTextAtSize(test, size) <= maxW || !line) line = test;
+                else { out.push(line); line = w; }
+            }
+            out.push(line);
+        }
+        return out;
+    };
+    const drawUnderline = (page, f, ln, x, y, size, color) => {
+        const uw = f.widthOfTextAtSize(ln, size);
+        page.drawRectangle({ x, y: y - size * 0.18, width: uw, height: Math.max(0.6, size * 0.055), color });
+    };
     for (const e of edits) {
         const page = pages[e.page];
         if (!page) continue;
@@ -640,13 +669,28 @@ async function engineEdit(fd) {
             const baseY = height * (1 - (parseFloat(e.y) || 0));
             const cw = Math.min(width, Math.max(2, (parseFloat(e.w) || 0.1) * width));
             page.drawRectangle({ x: px - 1.5, y: baseY - size * 0.28, width: cw + 3, height: size * 1.22, color: PDFLib.rgb(1, 1, 1) });
-            const newText = String(e.text == null ? '' : e.text);
+            const newText = String(e.text == null ? '' : e.text).slice(0, 800);
             if (newText.trim().length) {
-                page.drawText(newText.slice(0, 500), { x: px, y: baseY, size, font: e.bold ? boldFont : font, color: hexToRgb(e.color || '#111111') });
+                const f = pickFont(e);
+                const col = hexToRgb(e.color || '#111111');
+                let ly = baseY;
+                for (const ln of wrapText(newText, f, size, cw)) {
+                    page.drawText(ln, { x: px, y: ly, size, font: f, color: col });
+                    if (e.underline) drawUnderline(page, f, ln, px, ly, size, col);
+                    ly -= size * 1.18;
+                }
             }
         } else if (e.type === 'text') {
             const size = Math.min(96, Math.max(6, parseFloat(e.size) || 12));
-            page.drawText(String(e.text == null ? '' : e.text).slice(0, 500), { x: px, y: py - size * 0.3, size, font: e.bold ? boldFont : font, color: hexToRgb(e.color) });
+            const f = pickFont(e);
+            const col = hexToRgb(e.color);
+            const cw2 = Math.max(40, width - px - 16);
+            let ly = py - size * 0.3;
+            for (const ln of wrapText(String(e.text == null ? '' : e.text).slice(0, 800), f, size, cw2)) {
+                page.drawText(ln, { x: px, y: ly, size, font: f, color: col });
+                if (e.underline) drawUnderline(page, f, ln, px, ly, size, col);
+                ly -= size * 1.18;
+            }
         } else if (e.type === 'image') {
             const imf = imgMap[e.imageRef];
             if (!imf) continue;
@@ -1162,7 +1206,8 @@ function selectTlItem(item) {
     item.el.classList.add('sel');
     document.getElementById('repText').value = item.text;
     document.getElementById('repColor').value = sampleTextColor(item);
-    document.getElementById('repWeight').value = '';
+    repSizeAdj = null;
+    document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
     syncRepOpts(true);
 }
 function sampleTextColor(item) {
@@ -1184,9 +1229,10 @@ function pushReplaceEdit(newText) {
     if (!it) { alert('Click a piece of text on the page first.'); return; }
     bakeNow({
         type: 'replace', page: edState.page,
-        x: it.x, y: it.yBase, w: it.w, size: it.sizePt,
+        x: it.x, y: it.yBase, w: it.w,
+        size: repSizeAdj || it.sizePt,
         text: newText, color: document.getElementById('repColor').value,
-        bold: document.getElementById('repWeight').value === 'bold',
+        bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
         _orig: it.text
     });
     it.el.classList.remove('sel'); it.el.style.display = 'none';
@@ -1204,7 +1250,7 @@ canvas.addEventListener('click', e => {
         bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
             size: parseFloat(document.getElementById('edSize').value),
             color: document.getElementById('edColor').value,
-            bold: document.getElementById('edWeight').value === 'bold' });
+            bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder') });
         document.getElementById('edText').value = '';
     } else if (edState.mode === 'image') {
         const imf = document.getElementById('edImage').files[0];
@@ -1278,6 +1324,20 @@ document.getElementById('repApply').onclick = () => {
     pushReplaceEdit(t);
 };
 document.getElementById('repErase').onclick = () => pushReplaceEdit('');
+
+/* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
+let repSizeAdj = null;
+const fmtState = id => document.getElementById(id).classList.contains('on');
+['repBold', 'repItalic', 'repUnder', 'edBold', 'edItalic', 'edUnder'].forEach(id => {
+    document.getElementById(id).onclick = function () { this.classList.toggle('on'); };
+});
+function stepSize(d) {
+    const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
+    repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
+    document.getElementById('repSizeVal').textContent = repSizeAdj;
+}
+document.getElementById('repSizeDn').onclick = () => stepSize(-1);
+document.getElementById('repSizeUp').onclick = () => stepSize(1);
 
 /* ---- instant save engine: bake each change into the PDF immediately ---- */
 async function reloadFromBlob(blob) {
