@@ -368,7 +368,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost" id="repErase" title="Delete this entire line">Erase line</button>
         </div>
         <div class="row" id="textOpts" style="display:none;">
-            <span style="color:#9fb0c8;font-size:.82rem;">Click the page where text should start — type directly on it · Enter/click-away saves · Esc cancels</span>
+            <input type="text" id="edText" placeholder="Type text, then click the page to place it">
             <button type="button" class="ghost fmt" id="edBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="edItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="edUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -1215,60 +1215,11 @@ function resetTlStyle(item) {
 }
 function refreshEditingStyle() {
     const it = edState.selItem;
-    if (it && it.el && it.el.isContentEditable) {
-        it.el.style.fontWeight = fmtState('repBold') ? '700' : '400';
-        it.el.style.fontStyle = fmtState('repItalic') ? 'italic' : 'normal';
-        it.el.style.textDecoration = fmtState('repUnder') ? 'underline' : 'none';
-        it.el.style.color = document.getElementById('repColor').value;
-    }
-    const nt = holder.querySelector('.tl.newtext');
-    if (nt) {
-        nt.style.fontWeight = fmtState('edBold') ? '700' : '400';
-        nt.style.fontStyle = fmtState('edItalic') ? 'italic' : 'normal';
-        nt.style.textDecoration = fmtState('edUnder') ? 'underline' : 'none';
-        nt.style.color = document.getElementById('edColor').value;
-    }
-}
-function startNewText(xFrac, yFrac) {
-    const el = document.createElement('div');
-    el.className = 'tl editing newtext';
-    el.contentEditable = 'true';
-    el.style.left = (xFrac * 100) + '%';
-    el.style.top = (yFrac * 100) + '%';
-    el.style.minWidth = '30px';
-    el.style.background = '#fff';
-    el.style.fontFamily = "'Helvetica Neue',Helvetica,Arial,sans-serif";
-    el.style.lineHeight = '1.15';
-    const sizePt = parseFloat(document.getElementById('edSize').value);
-    const cssScale = parseFloat(canvas.style.width) / edState.pageWpt;
-    el.style.fontSize = (sizePt * cssScale * .92).toFixed(1) + 'px';
-    el.style.color = document.getElementById('edColor').value;
-    refreshEditingStyleNew(el);
-    holder.appendChild(el);
-    el.focus();
-    el.addEventListener('blur', () => commitNewText(el, xFrac, yFrac, sizePt));
-    el.addEventListener('keydown', ev => {
-        if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); }
-        else if (ev.key === 'Escape') { el.dataset.cancel = '1'; el.blur(); }
-    });
-}
-function refreshEditingStyleNew(el) {
-    el.style.fontWeight = fmtState('edBold') ? '700' : '400';
-    el.style.fontStyle = fmtState('edItalic') ? 'italic' : 'normal';
-    el.style.textDecoration = fmtState('edUnder') ? 'underline' : 'none';
-}
-function commitNewText(el, xFrac, yFrac, sizePt) {
-    const cancelled = el.dataset.cancel === '1';
-    const text = el.textContent.replace(/\u00a0/g, ' ').trim();
-    el.remove();
-    edState._justCommitted = Date.now();
-    if (cancelled || !text) return;
-    bakeNow({
-        type: 'text', page: edState.page, x: xFrac, y: yFrac, text,
-        size: sizePt,
-        color: document.getElementById('edColor').value,
-        bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder')
-    });
+    if (!it || !it.el || !it.el.isContentEditable) return;
+    it.el.style.fontWeight = fmtState('repBold') ? '700' : '400';
+    it.el.style.fontStyle = fmtState('repItalic') ? 'italic' : 'normal';
+    it.el.style.textDecoration = fmtState('repUnder') ? 'underline' : 'none';
+    it.el.style.color = document.getElementById('repColor').value;
 }
 function startInlineEdit(item) {
     if (edState.selItem && edState.selItem !== item && edState.selItem.el) commitInlineEdit();
@@ -1307,7 +1258,6 @@ function commitInlineEdit() {
     syncRepOpts(false);
     edState.selItem = null;
     repSizeAdj = null;
-    edState._justCommitted = Date.now();
     if (cancelled || newText === it.text.trim()) { renderPage(); return; }
     bakeNow({
         type: 'replace', page: edState.page,
@@ -1338,8 +1288,13 @@ canvas.addEventListener('click', e => {
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
     if (edState.mode === 'text') {
-        if (Date.now() - (edState._justCommitted || 0) < 150) return; // that click just saved an edit — don't spawn a box
-        startNewText(x, y);
+        const txt = document.getElementById('edText').value.trim();
+        if (!txt) { alert('Type the text first, then click where it should go.'); return; }
+        bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
+            size: parseFloat(document.getElementById('edSize').value),
+            color: document.getElementById('edColor').value,
+            bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder') });
+        document.getElementById('edText').value = '';
     } else if (edState.mode === 'image') {
         const imf = document.getElementById('edImage').files[0];
         if (!imf) { alert('Choose an image first, then click where it should go.'); return; }
