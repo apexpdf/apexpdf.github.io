@@ -1335,6 +1335,9 @@ document.getElementById('repApply').onclick = () => {
     if (!t) { alert('Type the replacement text (or use Erase to remove it).'); return; }
     pushReplaceEdit(t);
 };
+document.getElementById('repText').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('repApply').click(); }
+});
 document.getElementById('repErase').onclick = () => pushReplaceEdit('');
 function pushReplaceEdit(newText) {
     const it = edState.selItem;
