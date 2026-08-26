@@ -230,6 +230,18 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .tl.sel { background: rgba(124,58,237,.18) !important; border-color: #7c3aed !important; }
 .tl.editing { cursor: text !important; outline: 2px solid var(--acc); box-shadow: 0 6px 22px rgba(0,0,0,.4); z-index: 12; overflow: visible; white-space: pre-wrap; caret-color: var(--acc); }
 .tl.editing:focus { border-color: var(--acc); }
+/* ---------- ANNOTATE SUITE (PDFelement-style) ---------- */
+.ed-top { flex-wrap: wrap; }
+.tsep { width: 1px; height: 24px; background: #35415a; margin: 0 3px; flex: none; }
+.holder.mode-box, .holder.mode-draw, .holder.mode-place { cursor: crosshair; }
+.dragbox { position: absolute; pointer-events: none; display: none; z-index: 5; box-sizing: border-box; transform-origin: 0 0; }
+.dragbox.hl { mix-blend-mode: multiply; opacity: .45; border-radius: 2px; }
+.ink-hint { color: #9fb0c8; font-size: .82rem; }
+.sig-wrap { position: relative; border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+.sig-wrap::after { content: ''; position: absolute; left: 24px; right: 24px; top: 72%; border-top: 1.5px dashed #cbd5e1; pointer-events: none; }
+canvas.sigpad { display: block; width: 100%; height: 200px; touch-action: none; cursor: crosshair; background: transparent; }
+#sigPrev { height: 38px; background: #fff; border: 1px solid #35415a; border-radius: 8px; padding: 3px 6px; }
+.mini-lab { color: #9fb0c8; font-size: .8rem; display: inline-flex; align-items: center; gap: 6px; }
 .imgr { position: absolute; border: 2px solid rgba(124,58,237,.85); background: rgba(124,58,237,.10); cursor: pointer; z-index: 4; border-radius: 2px; }
 .imgr:hover { background: rgba(124,58,237,.20); }
 .imgr.sel { border-color: #7c3aed; background: rgba(124,58,237,.22); box-shadow: 0 0 0 2px #fff, 0 4px 16px rgba(0,0,0,.3); }
@@ -282,7 +294,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 </div>
 
 <div class="tools" id="tools">
-    <button class="tile" data-open="edit"><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div><h3>Edit PDF</h3><p>Rewrite existing text, add text &amp; images</p></button>
+    <button class="tile" data-open="edit"><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div><h3>Edit PDF</h3><p>Rewrite text, highlight, draw, shapes, stamps, sign &amp; more</p></button>
     <button class="tile" data-open="ocr"><div class="tile-icon teal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg></div><h3>OCR Text</h3><p>Extract text from scans & images</p></button>
     <button class="tile" data-open="convert"><div class="tile-icon violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 2 14 9 21 9"/><path d="M8 15h8"/><path d="m13 18 3-3-3-3"/></svg></div><h3>Convert PDF</h3><p>To JPG, PNG, Word, Text, HTML or CSV</p></button>
     <button class="tile" data-open="img2pdf"><div class="tile-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div><h3>JPG to PDF</h3><p>Turn images into a single PDF</p></button>
@@ -349,13 +361,21 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 <div class="modal" id="m-edit"><div class="box">
     <button class="mx" data-close>&times;</button>
     <div class="ed-top">
-        <div class="ed-tab"><span class="ed-dot"></span><span id="edTabName">Document</span></div>
-        <button type="button" class="modebtn active" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit All</button>
-        <button type="button" class="modebtn" id="modeText" onclick="setMode('text')">T&nbsp; Add Text</button>
-        <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Add Image</button>
-        <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase Area</button>
-        <button type="button" class="modebtn" id="modeImages" onclick="setMode('images')">&#9635;&nbsp; Edit Images</button>
-        <span style="flex:1;"></span>
+    <div class="ed-tab"><span class="ed-dot"></span><span id="edTabName">Document</span></div>
+    <button type="button" class="modebtn active" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit All</button>
+    <button type="button" class="modebtn" id="modeText" onclick="setMode('text')">T&nbsp; Add Text</button>
+    <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Add Image</button>
+    <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase / Redact</button>
+    <button type="button" class="modebtn" id="modeImages" onclick="setMode('images')">&#9635;&nbsp; Edit Images</button>
+    <span class="tsep"></span>
+    <button type="button" class="modebtn" id="modeHighlight" onclick="setMode('highlight')">&#9679;&nbsp; Highlight</button>
+    <button type="button" class="modebtn" id="modeDraw" onclick="setMode('draw')">&#9999;&nbsp; Draw</button>
+    <button type="button" class="modebtn" id="modeShape" onclick="setMode('shape')">&#9711;&nbsp; Shapes</button>
+    <button type="button" class="modebtn" id="modeNote" onclick="setMode('note')">&#128221;&nbsp; Note</button>
+    <button type="button" class="modebtn" id="modeStamp" onclick="setMode('stamp')">&#127991;&nbsp; Stamp</button>
+    <span class="tsep"></span>
+    <button type="button" class="modebtn" id="modeSign" onclick="setMode('sign')">&#9997;&nbsp; Sign</button>
+    <span style="flex:1;"></span>
         <button type="button" class="edk" id="srBtn" title="Find & replace text across the whole document">&#128269;&nbsp; Search &amp; Replace</button>
         <button type="button" class="edk" id="undoBtn" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
         <button class="go edk" id="dlEditedBtn" disabled>Download</button>
@@ -407,6 +427,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="eraseBrush" title="Freehand brush eraser">&#9998;&nbsp; Brush</button>
             <input type="range" id="brushSize" min="6" max="48" value="16" style="max-width:130px;">
             <span id="brushVal" style="color:#9fb0c8;font-size:.82rem;min-width:24px;">16</span>
+            <select id="eraseFill" title="Eraser color"><option value="white" selected>White-out</option><option value="black">Black redact</option></select>
             <span style="color:#9fb0c8;font-size:.87rem;">Drag a box for straight erasure, or enable Brush to paint over QR codes, logos, stamps. Saved instantly · Undo works.</span>
         </div>
         <div class="row" id="imgRow" style="display:none;">
@@ -415,6 +436,60 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost" id="imgDel">Delete image</button>
             <input type="file" id="imgFile" accept="image/png,image/jpeg" hidden>
             <span id="imgInfo" style="color:#9fb0c8;font-size:.82rem;"></span>
+        </div>
+        <div class="row" id="hlOpts" style="display:none;">
+            <select id="hlKind" title="Markup type" style="max-width:150px;">
+                <option value="hl" selected>Highlighter</option>
+                <option value="under">Underline</option>
+                <option value="strike">Strikethrough</option>
+            </select>
+            <input type="color" id="hlColor" value="#facc15" title="Markup color" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <select id="hlTh" title="Line thickness (underline / strikethrough)" style="max-width:110px;"><option value="1">Thin</option><option value="2" selected>Medium</option><option value="3.5">Bold</option></select>
+            <span style="color:#9fb0c8;font-size:.82rem;">Drag a box over any text to markup it — works on scans too.</span>
+        </div>
+        <div class="row" id="drawOpts" style="display:none;">
+            <input type="color" id="drawColor" value="#dc2626" title="Pen color" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <input type="range" id="drawWidth" min="1" max="12" value="2.5" step="0.5" style="max-width:130px;">
+            <span id="drawWVal" style="color:#9fb0c8;font-size:.82rem;min-width:42px;">2.5 pt</span>
+            <span style="color:#9fb0c8;font-size:.82rem;">Draw freehand with mouse, pen or finger. Each stroke is saved to the PDF instantly.</span>
+        </div>
+        <div class="row" id="shapeOpts" style="display:none;">
+            <select id="shapeKind" style="max-width:130px;">
+                <option value="rect">Rectangle</option>
+                <option value="ellipse">Ellipse</option>
+                <option value="line">Line</option>
+                <option value="arrow" selected>Arrow</option>
+            </select>
+            <input type="color" id="shapeColor" value="#dc2626" title="Stroke color" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <input type="range" id="shapeWidth" min="1" max="10" value="2" step="0.5" style="max-width:110px;">
+            <span id="shapeWVal" style="color:#9fb0c8;font-size:.82rem;min-width:32px;">2 pt</span>
+            <label class="mini-lab" style="cursor:pointer;"><input type="checkbox" id="shapeFill"> Fill</label>
+            <input type="color" id="shapeFillColor" value="#bfdbfe" title="Fill color" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <span style="color:#9fb0c8;font-size:.82rem;">Drag on the page to draw the shape.</span>
+        </div>
+        <div class="row" id="noteOpts" style="display:none;">
+            <input type="text" id="noteText" placeholder="Type the note, then click the page to place it" style="min-width:230px;flex:1;">
+            <select id="noteColor" title="Note paper color" style="max-width:110px;"><option value="#fde047" selected>Yellow</option><option value="#fda4af">Pink</option><option value="#93c5fd">Blue</option><option value="#86efac">Green</option></select>
+            <span style="color:#9fb0c8;font-size:.82rem;">Placed as a sticky note that prints &amp; stays visible everywhere.</span>
+        </div>
+        <div class="row" id="stampOpts" style="display:none;">
+            <select id="stampKind" style="max-width:170px;">
+                <option value="APPROVED">APPROVED</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="CONFIDENTIAL">CONFIDENTIAL</option>
+                <option value="FINAL">FINAL</option>
+                <option value="REJECTED">REJECTED</option>
+                <option value="URGENT">URGENT</option>
+                <option value="PAID">PAID</option>
+                <option value="REVIEW">REVIEW</option>
+            </select>
+            <span style="color:#9fb0c8;font-size:.82rem;">Click the page where the stamp should go.</span>
+        </div>
+        <div class="row" id="signOpts" style="display:none;">
+            <button type="button" class="ghost" id="sigDrawBtn">&#9997;&nbsp; Draw signature…</button>
+            <img id="sigPrev" alt="" hidden>
+            <select id="sigWidth" style="max-width:130px;"><option value="0.18">18% width</option><option value="0.26" selected>26% width</option><option value="0.36">36% width</option></select>
+            <span style="color:#9fb0c8;font-size:.82rem;">Then click the page to place your signature.</span>
         </div>
     </div>
     <div id="editor">
@@ -431,6 +506,16 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <div class="ed-launch" id="dzWrap">
         <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
         <div class="fname"></div>
+    </div>
+</div></div>
+
+<div class="modal" id="m-sign"><div class="box" style="max-width:560px;">
+    <button class="mx" data-close>&times;</button>
+    <h2>Draw your signature</h2><p class="sub">Sign with mouse, finger or stylus. It's placed on the page as a transparent PNG.</p>
+    <div class="sig-wrap"><canvas id="sigPad" class="sigpad"></canvas></div>
+    <div class="row" style="justify-content:flex-end;margin-top:14px;">
+        <button type="button" class="ghost" id="sigClear">Clear</button>
+        <button type="button" class="go" id="sigApply" disabled>Use signature</button>
     </div>
 </div></div>
 
@@ -747,10 +832,10 @@ async function engineEdit(fd) {
             const by = height * (1 - (parseFloat(e.y2) || 0));
             const left = Math.min(ax, bx), right = Math.max(ax, bx);
             const top = Math.max(ay, by), bottom = Math.min(ay, by);
-            page.drawRectangle({ x: left, y: bottom, width: right - left, height: top - bottom, color: PDFLib.rgb(1, 1, 1), borderWidth: 0 });
+            page.drawRectangle({ x: left, y: bottom, width: right - left, height: top - bottom, color: e.fill === 'black' ? PDFLib.rgb(0, 0, 0) : PDFLib.rgb(1, 1, 1), borderWidth: 0 });
         } else if (e.type === 'brush') {
             const r = Math.max(1, (parseFloat(e.r) || 0.01)) * width;
-            const col = PDFLib.rgb(1, 1, 1);
+            const col = e.fill === 'black' ? PDFLib.rgb(0, 0, 0) : PDFLib.rgb(1, 1, 1);
             const pts = e.points || [];
             let prev = null;
             for (const p of pts) {
@@ -777,6 +862,87 @@ async function engineEdit(fd) {
             if (!e.rect) continue;
             const r = e.rect;
             page.drawRectangle({ x: r.x * width, y: height - (r.y + r.h) * height, width: r.w * width, height: r.h * height, color: PDFLib.rgb(1, 1, 1), borderWidth: 0 });
+        } else if (e.type === 'highlight') {
+            const ax = Math.min(width, Math.max(0, (parseFloat(e.x1) || 0) * width));
+            const ay = height * (1 - (parseFloat(e.y1) || 0));
+            const bx = Math.min(width, Math.max(0, (parseFloat(e.x2) || 0) * width));
+            const by = height * (1 - (parseFloat(e.y2) || 0));
+            const left = Math.min(ax, bx), right = Math.max(ax, bx);
+            const top = Math.max(ay, by), bottom = Math.min(ay, by);
+            const col = hexToRgb(e.color || '#facc15');
+            if ((e.kind || 'hl') === 'hl') {
+                page.drawRectangle({ x: left, y: bottom, width: right - left, height: top - bottom, color: col, opacity: 0.38 });
+            } else {
+                const th = Math.min(8, Math.max(0.5, parseFloat(e.th) || 2));
+                const ly = (e.kind === 'under') ? bottom + th / 2 : (top + bottom) / 2;
+                page.drawLine({ start: { x: left, y: ly }, end: { x: right, y: ly }, thickness: th, color: col, opacity: 0.92, lineCap: 1 });
+            }
+        } else if (e.type === 'ink') {
+            const col = hexToRgb(e.color || '#dc2626');
+            const th = Math.min(28, Math.max(0.4, parseFloat(e.w) || 2.5));
+            const pts = (e.points || []).filter(p => Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]))
+                .map(p => [Math.min(width, Math.max(0, p[0] * width)), height * (1 - Math.min(1, Math.max(0, p[1])))]);
+            if (!pts.length) continue;
+            if (pts.length === 1) page.drawCircle({ x: pts[0][0], y: pts[0][1], size: th / 2, color: col });
+            else for (let i = 1; i < pts.length; i++) {
+                page.drawLine({ start: { x: pts[i - 1][0], y: pts[i - 1][1] }, end: { x: pts[i][0], y: pts[i][1] }, thickness: th, color: col, lineCap: 1 });
+            }
+        } else if (e.type === 'shape') {
+            const kind = e.kind || 'rect';
+            const col = hexToRgb(e.color || '#dc2626');
+            const th = Math.min(24, Math.max(0.4, parseFloat(e.w) || 2));
+            const noFill = { color: PDFLib.rgb(0, 0, 0), opacity: 0 };
+            const fillOpts = e.fill ? { color: hexToRgb(e.fillColor || '#bfdbfe'), opacity: 1 } : noFill;
+            if (kind === 'rect' || kind === 'ellipse') {
+                const ax = Math.min(width, Math.max(0, (parseFloat(e.x1) || 0) * width));
+                const ay = height * (1 - (parseFloat(e.y1) || 0));
+                const bx = Math.min(width, Math.max(0, (parseFloat(e.x2) || 0) * width));
+                const by = height * (1 - (parseFloat(e.y2) || 0));
+                const left = Math.min(ax, bx), right = Math.max(ax, bx);
+                const top = Math.max(ay, by), bottom = Math.min(ay, by);
+                if (kind === 'rect') page.drawRectangle({ x: left, y: bottom, width: right - left, height: top - bottom, borderColor: col, borderWidth: th, borderOpacity: 1, ...fillOpts });
+                else page.drawEllipse({ x: (left + right) / 2, y: (bottom + top) / 2, xScale: Math.max(1, (right - left) / 2), yScale: Math.max(1, (top - bottom) / 2), borderColor: col, borderWidth: th, borderOpacity: 1, ...fillOpts });
+            } else {
+                const a = { x: Math.min(width, Math.max(0, (parseFloat(e.x1) || 0) * width)), y: height * (1 - Math.min(1, Math.max(0, parseFloat(e.y1) || 0))) };
+                const b = { x: Math.min(width, Math.max(0, (parseFloat(e.x2) || 0) * width)), y: height * (1 - Math.min(1, Math.max(0, parseFloat(e.y2) || 0))) };
+                page.drawLine({ start: a, end: b, thickness: th, color: col, lineCap: 1 });
+                if (kind === 'arrow') {
+                    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+                    const hl = Math.min(18, Math.max(8, th * 3.5));
+                    for (const da of [Math.PI - 0.46, Math.PI + 0.46]) {
+                        page.drawLine({ start: b, end: { x: b.x + Math.cos(ang + da) * hl, y: b.y + Math.sin(ang + da) * hl }, thickness: th, color: col, lineCap: 1 });
+                    }
+                }
+            }
+        } else if (e.type === 'note') {
+            const f = await pickFont({ fam: 'helvetica' });
+            const size = 10, pad = 9, lh = 13.5;
+            const wNote = Math.min(200, Math.max(110, width * 0.22));
+            const lns = wrapText(String(e.text || '').slice(0, 600), f, size, wNote - pad * 2);
+            const hNote = pad * 2 + lns.length * lh;
+            const nx = Math.min(Math.max(2, px), Math.max(2, width - wNote - 2));
+            const ny = Math.min(Math.max(2, py - hNote), Math.max(2, height - hNote - 2));
+            page.drawRectangle({ x: nx, y: ny, width: wNote, height: hNote, color: hexToRgb(e.color || '#fde047'), opacity: 0.97, borderColor: hexToRgb('#8a6d0b'), borderWidth: 0.8, borderRadius: 6 });
+            lns.forEach((ln, i) => page.drawText(ln, { x: nx + pad, y: ny + hNote - pad - (i + 1) * lh + 3.2, size, font: f, color: PDFLib.rgb(0.15, 0.13, 0.04) }));
+        } else if (e.type === 'stamp') {
+            const col = hexToRgb(e.color || '#dc2626');
+            const f = await pickFont({ fam: 'helvetica', bold: true });
+            const text = String(e.kind || 'APPROVED').toUpperCase().slice(0, 18);
+            const size = 22;
+            const tw = f.widthOfTextAtSize(text, size);
+            const wStamp = tw + 30, hStamp = 44, rot = PDFLib.degrees(-8);
+            const sx = Math.min(Math.max(4, px - wStamp / 2), Math.max(4, width - wStamp - 4));
+            const sy = Math.min(Math.max(4, py - hStamp / 2), Math.max(4, height - hStamp - 4));
+            page.drawRectangle({ x: sx, y: sy, width: wStamp, height: hStamp, borderColor: col, borderWidth: 2.2, borderOpacity: 0.85, color: PDFLib.rgb(0, 0, 0), opacity: 0, rotate: rot });
+            page.drawText(text, { x: sx + 15, y: sy + (hStamp - size) / 2 + 2, size, font: f, color: col, opacity: 0.88, rotate: rot });
+        } else if (e.type === 'signature') {
+            const imf = imgMap[e.imageRef];
+            if (!imf) continue;
+            const buf = await imf.arrayBuffer();
+            const emb = (/png/i.test(imf.type || '') || /\.png$/i.test(imf.name || '')) ? await doc.embedPng(buf) : await doc.embedJpg(buf);
+            const wSig = Math.min(width, Math.max(20, (parseFloat(e.w) || 0.26) * width));
+            const hSig = wSig * (emb.height / emb.width);
+            page.drawImage(emb, { x: px, y: Math.max(0, py - hSig), width: wSig, height: hSig });
         }
     }
     return doc.save();
@@ -1432,11 +1598,21 @@ function sampleTextColor(item) {
     } catch (e) { return '#111111'; }
 }
 const updatePgLabel = () => pgLabel.textContent = 'Page ' + (edState.page + 1) + ' / ' + edState.pageCount;
+const STAMP_COLORS = { APPROVED: '#16a34a', DRAFT: '#64748b', CONFIDENTIAL: '#dc2626', FINAL: '#4f46e5', REJECTED: '#dc2626', URGENT: '#ea580c', PAID: '#16a34a', REVIEW: '#7c3aed' };
+function dataUrlToFile(dataUrl, name) {
+    const b64 = dataUrl.split(',')[1] || '';
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new File([arr], name || 'signature.png', { type: 'image/png' });
+}
 canvas.addEventListener('click', e => {
-    if (!edState.doc || edState.mode === 'erase') return;
+    if (!edState.doc) return;
+    const m = edState.mode;
+    if (m === 'erase' || m === 'highlight' || m === 'shape' || m === 'draw' || m === 'images' || m === 'replace') return;
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    if (edState.mode === 'text') {
+    if (m === 'text') {
         const txt = document.getElementById('edText').value.trim();
         if (!txt) { alert('Type the text first, then click where it should go.'); return; }
         bakeNow({ type: 'text', page: edState.page, x, y, text: txt,
@@ -1447,17 +1623,30 @@ canvas.addEventListener('click', e => {
             strike: fmtState('edStrike'), superscript: fmtState('edSup'), subscript: fmtState('edSub'),
             lead: parseFloat(document.getElementById('edLead').value) || 1.18 });
         document.getElementById('edText').value = '';
-    } else if (edState.mode === 'image') {
+    } else if (m === 'image') {
         const imf = document.getElementById('edImage').files[0];
         if (!imf) { alert('Choose an image first, then click where it should go.'); return; }
         bakeNow({ type: 'image', page: edState.page, x, y,
             w: parseFloat(document.getElementById('edWidth').value), imageRef: 'img0' },
             [{ key: 'img0', file: imf }]);
         document.getElementById('edImage').value = '';
+    } else if (m === 'note') {
+        const txt = document.getElementById('noteText').value.trim();
+        if (!txt) { alert('Type the note first, then click where it should go.'); return; }
+        bakeNow({ type: 'note', page: edState.page, x, y, text: txt, color: document.getElementById('noteColor').value });
+        document.getElementById('noteText').value = '';
+    } else if (m === 'stamp') {
+        const kind = document.getElementById('stampKind').value;
+        bakeNow({ type: 'stamp', page: edState.page, x, y, kind, color: STAMP_COLORS[kind] || '#dc2626' });
+    } else if (m === 'sign') {
+        if (!edState.sigData) { alert('Draw your signature first — press “✍ Draw signature…”.'); return; }
+        bakeNow({ type: 'signature', page: edState.page, x, y,
+            w: parseFloat(document.getElementById('sigWidth').value), imageRef: 'img0' },
+            [{ key: 'img0', file: dataUrlToFile(edState.sigData) }]);
     }
 });
 
-/* ---- erase-area: drag a box over anything (QR codes, logos, stamps…) ---- */
+/* ---- pointer engine: erase (box/brush) · highlight/markup · shapes · ink ---- */
 let eraseDrag = null;
 function canvasFrac(e) {
     const r = canvas.getBoundingClientRect();
@@ -1472,30 +1661,128 @@ function drawEraseOverlay(d) {
     eraseOverlay.style.height = (h * 100) + '%';
     eraseOverlay.style.display = 'block';
 }
+const eraseFillColor = () => document.getElementById('eraseFill').value === 'black' ? '#000000' : '#ffffff';
 const brushOn = () => document.getElementById('eraseBrush').classList.contains('on');
 document.getElementById('eraseBrush').onclick = function () { this.classList.toggle('on'); };
 document.getElementById('brushSize').addEventListener('input', function () { document.getElementById('brushVal').textContent = this.value; });
 let brushPts = null, brushActive = false;
+let boxDrag = null, inkDrag = null;
 function brushRadiusFrac() { return (parseInt(document.getElementById('brushSize').value, 10) / 2) / canvas.clientWidth; }
 function brushStamp(p) {
     if (!edState.cctx) return;
     const W = canvas.width, H = canvas.height, r = brushRadiusFrac() * W;
-    edState.cctx.fillStyle = '#ffffff';
+    edState.cctx.fillStyle = eraseFillColor();
     edState.cctx.beginPath(); edState.cctx.arc(p.x * W, p.y * H, r, 0, 7); edState.cctx.fill();
 }
+/* live preview box for highlight / markup / shape drags */
+const boxPrev = document.createElement('div');
+boxPrev.className = 'dragbox';
+holder.appendChild(boxPrev);
+function hideBoxPreview() { boxPrev.style.display = 'none'; boxPrev.className = 'dragbox'; }
+function showHlPreview(d) {
+    const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
+    const kind = document.getElementById('hlKind').value;
+    const col = document.getElementById('hlColor').value;
+    const th = Math.max(1, (parseFloat(document.getElementById('hlTh').value) || 2) * edState.vpScale);
+    const l = Math.min(d.x1, d.x2) * W, t = Math.min(d.y1, d.y2) * H;
+    const w = Math.abs(d.x2 - d.x1) * W, h = Math.abs(d.y2 - d.y1) * H;
+    if (kind === 'hl') {
+        boxPrev.className = 'dragbox hl';
+        boxPrev.style.border = 'none';
+        boxPrev.style.background = col;
+        boxPrev.style.transform = 'none';
+        boxPrev.style.left = l + 'px'; boxPrev.style.top = t + 'px';
+        boxPrev.style.width = w + 'px'; boxPrev.style.height = h + 'px';
+    } else {
+        boxPrev.className = 'dragbox mk';
+        boxPrev.style.background = col;
+        boxPrev.style.border = 'none';
+        boxPrev.style.transform = 'none';
+        boxPrev.style.borderRadius = '2px';
+        boxPrev.style.width = w + 'px';
+        boxPrev.style.height = th + 'px';
+        boxPrev.style.left = l + 'px';
+        boxPrev.style.top = (kind === 'under' ? t + h - th : t + h / 2 - th / 2) + 'px';
+    }
+    boxPrev.style.display = 'block';
+}
+function showShapePreview(d) {
+    const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
+    const kind = document.getElementById('shapeKind').value;
+    const col = document.getElementById('shapeColor').value;
+    const th = Math.max(1, (parseFloat(document.getElementById('shapeWidth').value) || 2) * edState.vpScale);
+    boxPrev.style.display = 'block';
+    boxPrev.style.background = 'transparent';
+    boxPrev.style.left = (Math.min(d.x1, d.x2) * W) + 'px';
+    boxPrev.style.top = (Math.min(d.y1, d.y2) * H) + 'px';
+    boxPrev.style.width = (Math.abs(d.x2 - d.x1) * W) + 'px';
+    boxPrev.style.height = (Math.abs(d.y2 - d.y1) * H) + 'px';
+    if (kind === 'rect' || kind === 'ellipse') {
+        boxPrev.className = 'dragbox shp';
+        boxPrev.style.transform = 'none';
+        boxPrev.style.border = th + 'px solid ' + col;
+        boxPrev.style.borderRadius = kind === 'ellipse' ? '50%' : '2px';
+    } else {
+        boxPrev.className = 'dragbox shp';
+        boxPrev.style.border = 'none';
+        boxPrev.style.borderRadius = '2px';
+        boxPrev.style.borderTop = th + 'px solid ' + col;
+        const px1 = d.x1 * W, py1 = d.y1 * H, px2 = d.x2 * W, py2 = d.y2 * H;
+        const len = Math.hypot(px2 - px1, py2 - py1);
+        const ang = Math.atan2(py2 - py1, px2 - px1) * 180 / Math.PI;
+        boxPrev.style.left = px1 + 'px'; boxPrev.style.top = py1 + 'px';
+        boxPrev.style.width = len + 'px'; boxPrev.style.height = '0';
+        boxPrev.style.transform = 'rotate(' + ang.toFixed(2) + 'deg)';
+    }
+}
+function inkPreviewSeg(a, b) {
+    if (!edState.cctx) return;
+    const ctx = edState.cctx;
+    ctx.strokeStyle = document.getElementById('drawColor').value;
+    ctx.lineWidth = Math.max(1, (parseFloat(document.getElementById('drawWidth').value) || 2.5) * edState.vpScale);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(a.x * canvas.width, a.y * canvas.height);
+    ctx.lineTo(b.x * canvas.width, b.y * canvas.height);
+    ctx.stroke();
+}
 canvas.addEventListener('pointerdown', e => {
-    if (edState.mode !== 'erase') return;
+    if (!edState.doc) return;
+    const m = edState.mode;
+    if (m !== 'erase' && m !== 'highlight' && m !== 'shape' && m !== 'draw') return;
     e.preventDefault();
     try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
     const p = canvasFrac(e);
-    if (brushOn()) {
-        brushActive = true; brushPts = [p]; brushStamp(p);
-        return;
+    if (m === 'erase') {
+        if (brushOn()) { brushActive = true; brushPts = [p]; brushStamp(p); return; }
+        eraseDrag = { x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+        drawEraseOverlay(eraseDrag);
+    } else if (m === 'highlight') {
+        if (e.button !== undefined && e.button !== 0) return;
+        boxDrag = { kind: 'hl', x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+        showHlPreview(boxDrag);
+    } else if (m === 'shape') {
+        if (e.button !== undefined && e.button !== 0) return;
+        boxDrag = { kind: 'shp', x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+        showShapePreview(boxDrag);
+    } else if (m === 'draw') {
+        if (e.button !== undefined && e.button !== 0) return;
+        inkDrag = [p];
     }
-    eraseDrag = { x1: p.x, y1: p.y, x2: p.x, y2: p.y };
-    drawEraseOverlay(eraseDrag);
 });
 canvas.addEventListener('pointermove', e => {
+    if (inkDrag) {
+        const p = canvasFrac(e);
+        const last = inkDrag[inkDrag.length - 1];
+        if (Math.hypot(p.x - last.x, p.y - last.y) > 0.0015) { inkDrag.push(p); inkPreviewSeg(last, p); }
+        return;
+    }
+    if (boxDrag) {
+        const p = canvasFrac(e);
+        boxDrag.x2 = p.x; boxDrag.y2 = p.y;
+        if (boxDrag.kind === 'hl') showHlPreview(boxDrag); else showShapePreview(boxDrag);
+        return;
+    }
     if (brushActive) {
         const p = canvasFrac(e);
         const last = brushPts[brushPts.length - 1];
@@ -1511,37 +1798,75 @@ function finishErase() {
     if (brushActive) {
         brushActive = false;
         const pts = brushPts; brushPts = null;
-        if (pts && pts.length > 1) bakeNow({ type: 'brush', page: edState.page, points: pts, r: brushRadiusFrac() });
+        if (pts && pts.length > 1) bakeNow({ type: 'brush', page: edState.page, points: pts, r: brushRadiusFrac(), fill: document.getElementById('eraseFill').value });
         return;
     }
     if (!eraseDrag) return;
     const d = eraseDrag; eraseDrag = null;
     eraseOverlay.style.display = 'none';
     if (Math.abs(d.x2 - d.x1) < 0.006 && Math.abs(d.y2 - d.y1) < 0.006) return;
-    bakeNow({ type: 'erase', page: edState.page, x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2 });
+    bakeNow({ type: 'erase', page: edState.page, x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2, fill: document.getElementById('eraseFill').value });
 }
-canvas.addEventListener('pointerup', finishErase);
-canvas.addEventListener('pointercancel', () => { eraseDrag = null; brushActive = false; brushPts = null; eraseOverlay.style.display = 'none'; });
+function finishBox() {
+    const d = boxDrag; boxDrag = null;
+    hideBoxPreview();
+    if (!d || !edState.doc) return;
+    if (Math.abs(d.x2 - d.x1) < 0.004 && Math.abs(d.y2 - d.y1) < 0.004) return;
+    if (d.kind === 'hl') {
+        const kind = document.getElementById('hlKind').value;
+        bakeNow({ type: 'highlight', kind, page: edState.page,
+            x1: Math.min(d.x1, d.x2), y1: Math.min(d.y1, d.y2),
+            x2: Math.max(d.x1, d.x2), y2: Math.max(d.y1, d.y2),
+            color: document.getElementById('hlColor').value,
+            th: parseFloat(document.getElementById('hlTh').value) || 2 });
+    } else {
+        bakeNow({ type: 'shape', kind: document.getElementById('shapeKind').value, page: edState.page,
+            x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2,
+            color: document.getElementById('shapeColor').value,
+            w: parseFloat(document.getElementById('shapeWidth').value) || 2,
+            fill: document.getElementById('shapeFill').checked,
+            fillColor: document.getElementById('shapeFillColor').value });
+    }
+}
+function finishInk() {
+    const pts = inkDrag; inkDrag = null;
+    if (!pts || !pts.length || !edState.doc) return;
+    bakeNow({ type: 'ink', page: edState.page, points: pts,
+        color: document.getElementById('drawColor').value,
+        w: parseFloat(document.getElementById('drawWidth').value) || 2.5 });
+}
+canvas.addEventListener('pointerup', () => {
+    if (boxDrag) finishBox();
+    else if (inkDrag) finishInk();
+    else finishErase();
+});
+canvas.addEventListener('pointercancel', () => {
+    boxDrag = null; inkDrag = null; hideBoxPreview();
+    eraseDrag = null; brushActive = false; brushPts = null; eraseOverlay.style.display = 'none';
+});
+document.getElementById('drawWidth').addEventListener('input', function () { document.getElementById('drawWVal').textContent = parseFloat(this.value) + ' pt'; });
+document.getElementById('shapeWidth').addEventListener('input', function () { document.getElementById('shapeWVal').textContent = parseFloat(this.value) + ' pt'; });
 document.getElementById('pgPrev').onclick = async () => { if (edState.page > 0) { edState.page--; await renderPage(); } };
 document.getElementById('pgNext').onclick = async () => { if (edState.page < edState.pageCount - 1) { edState.page++; await renderPage(); } };
 
 function setMode(m) {
     edState.mode = m;
-    document.getElementById('modeText').classList.toggle('active', m === 'text');
-    document.getElementById('modeImage').classList.toggle('active', m === 'image');
-    document.getElementById('modeReplace').classList.toggle('active', m === 'replace');
-    document.getElementById('modeErase').classList.toggle('active', m === 'erase');
-    document.getElementById('modeImages').classList.toggle('active', m === 'images');
-    document.getElementById('textOpts').style.display = m === 'text' ? 'flex' : 'none';
-    document.getElementById('imageOpts').style.display = m === 'image' ? 'flex' : 'none';
-    document.getElementById('eraseOpts').style.display = m === 'erase' ? 'flex' : 'none';
-    document.getElementById('imgRow').style.display = m === 'images' ? 'flex' : 'none';
+    const MODE_DEFS = [['replace', 'modeReplace'], ['text', 'modeText'], ['image', 'modeImage'], ['erase', 'modeErase'], ['images', 'modeImages'], ['highlight', 'modeHighlight'], ['draw', 'modeDraw'], ['shape', 'modeShape'], ['note', 'modeNote'], ['stamp', 'modeStamp'], ['sign', 'modeSign']];
+    const MODE_ROWS = { text: 'textOpts', image: 'imageOpts', erase: 'eraseOpts', images: 'imgRow', highlight: 'hlOpts', draw: 'drawOpts', shape: 'shapeOpts', note: 'noteOpts', stamp: 'stampOpts', sign: 'signOpts' };
+    for (const [k, id] of MODE_DEFS) document.getElementById(id).classList.toggle('active', k === m);
+    for (const k in MODE_ROWS) document.getElementById(MODE_ROWS[k]).style.display = k === m ? 'flex' : 'none';
     syncRepOpts(m === 'replace' && edState.selItem);
     holder.classList.toggle('mode-replace', m === 'replace');
     holder.classList.toggle('mode-erase', m === 'erase');
+    holder.classList.toggle('mode-box', m === 'highlight' || m === 'shape');
+    holder.classList.toggle('mode-draw', m === 'draw');
+    holder.classList.toggle('mode-place', m === 'text' || m === 'image' || m === 'note' || m === 'stamp' || m === 'sign');
+    hideBoxPreview();
+    boxDrag = null; inkDrag = null;
     if (m !== 'replace' && edState.selItem) { edState.selItem.el.classList.remove('sel'); edState.selItem = null; }
     if (m !== 'images') { holder.querySelectorAll('.imgr').forEach(n => n.remove()); edState.selImg = null; }
     else if (edState.doc) renderPage();
+    if (m === 'note') setTimeout(() => { const n = document.getElementById('noteText'); if (n) n.focus(); }, 60);
 }
 
 document.getElementById('repApply').onclick = () => {
@@ -1740,6 +2065,92 @@ document.getElementById('dlEditedBtn').onclick = function () {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 };
+
+/* ---- signature pad (PDFelement-style: draw → place on page) ---- */
+edState.sigData = null;
+(function wireSignPad() {
+    const modal = document.getElementById('m-sign');
+    const pad = document.getElementById('sigPad');
+    const ctx = pad.getContext('2d');
+    const applyBtn = document.getElementById('sigApply');
+    let drawing = false, last = null, hasInk = false;
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    function sizePad() {
+        const w = pad.clientWidth || 480, h = 200;
+        pad.width = Math.round(w * DPR); pad.height = Math.round(h * DPR);
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        hasInk = false; applyBtn.disabled = true;
+    }
+    const pos = e => { const r = pad.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const setInk = () => { if (!hasInk) { hasInk = true; applyBtn.disabled = false; } };
+    pad.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        try { pad.setPointerCapture(e.pointerId); } catch (_) {}
+        drawing = true; last = pos(e);
+        ctx.fillStyle = '#101828';
+        ctx.beginPath(); ctx.arc(last.x, last.y, 1.4, 0, 7); ctx.fill();
+        setInk();
+    });
+    pad.addEventListener('pointermove', e => {
+        if (!drawing) return;
+        const p = pos(e);
+        ctx.strokeStyle = '#101828'; ctx.lineWidth = 2.6;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        last = p; setInk();
+    });
+    pad.addEventListener('pointerup', () => { drawing = false; });
+    pad.addEventListener('pointercancel', () => { drawing = false; });
+    document.getElementById('sigClear').onclick = sizePad;
+    document.getElementById('sigDrawBtn').onclick = () => { openModalById('m-sign'); sizePad(); };
+    applyBtn.onclick = () => {
+        if (!hasInk) return;
+        try {
+            const w = pad.width, h = pad.height;
+            const data = ctx.getImageData(0, 0, w, h).data;
+            let minX = w, minY = h, maxX = -1, maxY = -1;
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    if (data[(y * w + x) * 4 + 3] > 12) {
+                        if (x < minX) minX = x; if (x > maxX) maxX = x;
+                        if (y < minY) minY = y; if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX < 0) return;
+            const p = Math.round(10 * DPR);
+            minX = Math.max(0, minX - p); minY = Math.max(0, minY - p);
+            maxX = Math.min(w - 1, maxX + p); maxY = Math.min(h - 1, maxY + p);
+            const out = document.createElement('canvas');
+            out.width = maxX - minX + 1; out.height = maxY - minY + 1;
+            out.getContext('2d').drawImage(pad, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+            edState.sigData = out.toDataURL('image/png');
+            const prev = document.getElementById('sigPrev');
+            prev.src = edState.sigData; prev.hidden = false;
+            modal.classList.remove('open');
+            edMsg.textContent = 'Signature ready — click the page to place it.'; edMsg.className = 'msg ok';
+            setTimeout(() => { if (edMsg.className === 'msg ok' && edMsg.textContent.indexOf('Signature ready') === 0) { edMsg.textContent = ''; edMsg.className = 'msg'; } }, 2600);
+        } catch (err) { edMsg.textContent = 'Signature failed: ' + err.message; edMsg.className = 'msg err'; }
+    };
+})();
+
+/* ---- editor keyboard: Ctrl/Cmd+Z undo, Esc cancels an in-progress drag ---- */
+addEventListener('keydown', e => {
+    if (!editor.classList.contains('open')) return;
+    if (e.key === 'Escape' && (boxDrag || inkDrag || eraseDrag || brushActive)) {
+        boxDrag = null; inkDrag = null; eraseDrag = null; brushActive = false; brushPts = null;
+        hideBoxPreview(); eraseOverlay.style.display = 'none';
+        e.stopPropagation();
+        return;
+    }
+    const ae = document.activeElement;
+    const typing = ae && (/^(INPUT|TEXTAREA)$/.test(ae.tagName) || ae.isContentEditable);
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) {
+        const ub = document.getElementById('undoBtn');
+        if (!ub.disabled && edState.file) { e.preventDefault(); ub.click(); }
+    }
+}, true);
 
 /* ============ OCR ============ */
 const ocrWorkers = {};
