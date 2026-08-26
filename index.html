@@ -1159,6 +1159,7 @@ async function renderPage() {
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     edState.cctx = ctx; edState.vpScale = devScale;
     edState.pageWpt = vp1.width; edState.pageHpt = vp1.height;
+    _baseSnap = null;
     updatePgLabel();
     document.querySelectorAll('#edThumbs .thumb').forEach((t, i) => t.classList.toggle('act', i === edState.page));
     await loadTextLayer(page);
@@ -1340,7 +1341,62 @@ function classifyFam(raw) {
     if (/^g_|^\w+_f\d/.test(s)) return { fam: 'helvetica', label: 'Embedded ≈ Helvetica' };
     return { fam: 'helvetica', label: s ? s.slice(0, 18) : 'Helvetica (default)' };
 }
+/* ---- live WYSIWYG preview: page repaints as you type (PDFelement-style) ---- */
+let _baseSnap = null;
+function snapshotBase() {
+    _baseSnap = document.createElement('canvas');
+    _baseSnap.width = canvas.width; _baseSnap.height = canvas.height;
+    _baseSnap.getContext('2d').drawImage(canvas, 0, 0);
+}
+function restoreBase() {
+    if (_baseSnap && _baseSnap.width === canvas.width && edState.cctx) edState.cctx.drawImage(_baseSnap, 0, 0);
+}
+const famCss = f => f === 'times' ? '"Times New Roman",Times,serif' : f === 'courier' ? '"Courier New",Courier,monospace' : 'Helvetica,Arial,sans-serif';
+function previewReplace() {
+    const it = edState.selItem;
+    if (!it || !edState.cctx || !edState.pageWpt) return;
+    if (!_baseSnap || _baseSnap.width !== canvas.width) snapshotBase(); else restoreBase();
+    const ctx = edState.cctx, S = edState.vpScale, Wpt = edState.pageWpt, Hpt = edState.pageHpt;
+    const P = (fmtState('repPaint') && edState.paintedStyle) ? edState.paintedStyle : null;
+    const size = (repSizeAdj || (P ? P.size : it.sizePt)) * S;
+    const below = document.getElementById('repPos').value === 'below';
+    const newY = below ? Math.min(0.99, it.yBase + it.sizePt * 1.4 / Hpt) : it.yBase;
+    if (!below) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect((it.x * Wpt - 1.5) * S, (it.yBase * Hpt - 0.94 * it.sizePt) * S, (it.w * Wpt + 3) * S, 1.22 * it.sizePt * S);
+    }
+    const txt = document.getElementById('repText').value;
+    if (!txt.trim()) return;
+    const col = P ? P.color : document.getElementById('repColor').value;
+    const bold = P ? P.bold : fmtState('repBold'), ital = P ? P.italic : fmtState('repItalic');
+    const under = P ? P.underline : fmtState('repUnder'), strike = P ? P.strike : fmtState('repStrike');
+    const sup = P ? P.sup : fmtState('repSup'), sub = P ? P.sub : fmtState('repSub');
+    const lead = Math.max(0.8, Math.min(3, parseFloat(document.getElementById('repLead').value) || 1.18));
+    ctx.save();
+    ctx.fillStyle = col; ctx.textBaseline = 'alphabetic';
+    ctx.font = (ital ? 'italic ' : '') + (bold ? 'bold ' : '') + size.toFixed(1) + 'px ' + famCss(P ? P.fam : it.fam);
+    const maxW = it.w * Wpt * S;
+    const lines = []; let cur = '';
+    for (const w of txt.split(/\s+/)) {
+        const t = cur ? cur + ' ' + w : w;
+        if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+    }
+    lines.push(cur);
+    let ly = newY * Hpt * S;
+    for (const ln of lines) {
+        let ds = size, dy = 0;
+        if (sup) { ds = size * 0.62; dy = size * 0.33; }
+        else if (sub) { ds = size * 0.62; dy = -size * 0.16; }
+        ctx.fillText(ln, it.x * Wpt * S, ly + dy);
+        const tw = ctx.measureText(ln).width;
+        if (under) ctx.fillRect(it.x * Wpt * S, ly + dy - ds * 0.18, tw, Math.max(0.8, ds * 0.055));
+        if (strike) ctx.fillRect(it.x * Wpt * S, ly + dy + ds * 0.28, tw, Math.max(0.8, ds * 0.055));
+        ly -= size * lead;
+    }
+    ctx.restore();
+}
 function selectTlItem(item) {
+    restoreBase(); snapshotBase();
     if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
     edState.selItem = item;
     item.el.classList.add('sel');
@@ -1357,6 +1413,9 @@ function selectTlItem(item) {
     setFmt('repSub', P ? P.sub : false);
     document.getElementById('repFontName').textContent = 'Font: ' + (P ? P.fam : item.famLabel);
     syncRepOpts(true);
+    previewReplace();
+    const rt = document.getElementById('repText');
+    rt.focus(); rt.select();
 }
 function sampleTextColor(item) {
     try {
@@ -1609,15 +1668,21 @@ const fmtState = id => document.getElementById(id).classList.contains('on');
             if (id.endsWith('Sup')) document.getElementById(pre + 'Sub').classList.remove('on');
             if (id.endsWith('Sub')) document.getElementById(pre + 'Sup').classList.remove('on');
         }
+        if (edState.selItem && id.startsWith('rep')) previewReplace();
     };
 });
 function stepSize(d) {
     const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
     repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
     document.getElementById('repSizeVal').textContent = repSizeAdj;
+    previewReplace();
 }
 document.getElementById('repSizeDn').onclick = () => stepSize(-1);
 document.getElementById('repSizeUp').onclick = () => stepSize(1);
+document.getElementById('repText').addEventListener('input', previewReplace);
+document.getElementById('repColor').addEventListener('input', () => { if (edState.selItem) previewReplace(); });
+document.getElementById('repLead').addEventListener('change', () => { if (edState.selItem) previewReplace(); });
+document.getElementById('repPos').addEventListener('change', () => { if (edState.selItem) previewReplace(); });
 
 /* ---- instant save engine: bake each change into the PDF immediately ---- */
 async function reloadFromBlob(blob) {
