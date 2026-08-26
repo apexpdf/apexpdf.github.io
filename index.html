@@ -228,6 +228,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .holder.mode-replace .tl { pointer-events: auto; cursor: text; border-color: rgba(99,102,241,.55); background: rgba(99,102,241,.055); }
 .holder.mode-replace .tl:hover { background: rgba(99,102,241,.17); border-color: var(--acc); }
 .tl.sel { background: rgba(124,58,237,.18) !important; border-color: #7c3aed !important; }
+.tl.editing { cursor: text !important; outline: 2px solid var(--acc); box-shadow: 0 6px 22px rgba(0,0,0,.4); z-index: 12; overflow: visible; white-space: pre-wrap; caret-color: var(--acc); }
+.tl.editing:focus { border-color: var(--acc); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { background: var(--acc-soft); border: 1px solid #dfe4ff; color: var(--acc-hov); padding: 5px 12px; border-radius: 999px; font-size: .77rem; font-weight: 550; display: inline-flex; align-items: center; gap: 8px; }
 .chip button { background: none; border: none; color: var(--err); cursor: pointer; font-weight: 700; font-size: .95rem; padding: 0; line-height: 1; }
@@ -355,7 +357,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     </div>
     <div class="ed-strip">
         <div class="row" id="repOpts" style="display:none;">
-            <input type="text" id="repText" placeholder="Rewrite the selected text here">
+            <span style="color:#9fb0c8;font-size:.82rem;">Editing on the page — press <b>Enter</b> or click outside to save · Esc cancels</span>
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
@@ -363,8 +365,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
-            <button type="button" class="ghost" id="repApply">Replace</button>
-            <button type="button" class="ghost" id="repErase" title="Remove this text from the page">Erase</button>
+            <button type="button" class="ghost" id="repErase" title="Delete this entire line">Erase line</button>
         </div>
         <div class="row" id="textOpts" style="display:none;">
             <input type="text" id="edText" placeholder="Type text, then click the page to place it">
@@ -1190,7 +1191,12 @@ async function loadTextLayer(pageProxy, vp) {
             item.el.style.width = (item.w * 100) + '%';
             item.el.style.height = (item.h * 1.15 * 100) + '%';
             item.el.title = item.text;
-            item.el.addEventListener('click', ev => { ev.stopPropagation(); selectTlItem(item); });
+            item.el.addEventListener('click', ev => { ev.stopPropagation(); startInlineEdit(item); });
+            item.el.addEventListener('blur', () => commitInlineEdit());
+            item.el.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') { ev.preventDefault(); item.el.blur(); }
+                else if (ev.key === 'Escape') { item.el.dataset.cancel = '1'; item.el.blur(); }
+            });
             holder.appendChild(item.el);
             edState.textItems.push(item);
         }
@@ -1200,15 +1206,67 @@ async function loadTextLayer(pageProxy, vp) {
     } catch (e) { /* non-fatal */ }
 }
 function syncRepOpts(show) { document.getElementById('repOpts').style.display = show ? 'flex' : 'none'; }
-function selectTlItem(item) {
-    if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
+function resetTlStyle(item) {
+    const el = item.el;
+    el.style.left = (item.x * 100) + '%';
+    el.style.top = ((item.yBase - item.h * 0.88) * 100) + '%';
+    el.style.width = (item.w * 100) + '%';
+    el.style.height = (item.h * 1.15 * 100) + '%';
+}
+function refreshEditingStyle() {
+    const it = edState.selItem;
+    if (!it || !it.el || !it.el.isContentEditable) return;
+    it.el.style.fontWeight = fmtState('repBold') ? '700' : '400';
+    it.el.style.fontStyle = fmtState('repItalic') ? 'italic' : 'normal';
+    it.el.style.textDecoration = fmtState('repUnder') ? 'underline' : 'none';
+    it.el.style.color = document.getElementById('repColor').value;
+}
+function startInlineEdit(item) {
+    if (edState.selItem && edState.selItem !== item && edState.selItem.el) commitInlineEdit();
+    if (edState.editingEl) return;
     edState.selItem = item;
-    item.el.classList.add('sel');
-    document.getElementById('repText').value = item.text;
-    document.getElementById('repColor').value = sampleTextColor(item);
+    const el = item.el;
+    el.classList.add('sel', 'editing');
+    el.contentEditable = 'true';
+    el._col = sampleTextColor(item);
+    const cssScale = parseFloat(canvas.style.width) / edState.pageWpt;
+    el.style.background = '#fff';
+    el.style.fontFamily = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+    el.style.fontSize = (item.sizePt * cssScale * .92).toFixed(1) + 'px';
+    el.style.lineHeight = '1.15';
     repSizeAdj = null;
     document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
+    refreshEditingStyle();
+    el.focus();
+    const range = document.createRange(); range.selectNodeContents(el); range.collapse(false);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     syncRepOpts(true);
+}
+function commitInlineEdit() {
+    const it = edState.selItem, el = it && it.el;
+    if (!it || !el) return;
+    if (!el.isContentEditable) { el.classList.remove('sel'); return; }
+    const cancelled = el.dataset.cancel === '1';
+    const newText = el.textContent.replace(/\u00a0/g, ' ').trim();
+    const col = el._col || '#111111';
+    const usedSize = repSizeAdj || it.sizePt;
+    el.contentEditable = 'false';
+    el.dataset.cancel = '';
+    el.classList.remove('sel', 'editing');
+    el.removeAttribute('style');
+    resetTlStyle(it);
+    syncRepOpts(false);
+    edState.selItem = null;
+    repSizeAdj = null;
+    if (cancelled || newText === it.text.trim()) { renderPage(); return; }
+    bakeNow({
+        type: 'replace', page: edState.page,
+        x: it.x, y: it.yBase, w: it.w,
+        size: usedSize,
+        text: newText, color: col,
+        bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
+        _orig: it.text
+    });
 }
 function sampleTextColor(item) {
     try {
@@ -1223,21 +1281,6 @@ function sampleTextColor(item) {
         }
         return '#' + best.map(v => v.toString(16).padStart(2, '0')).join('');
     } catch (e) { return '#111111'; }
-}
-function pushReplaceEdit(newText) {
-    const it = edState.selItem;
-    if (!it) { alert('Click a piece of text on the page first.'); return; }
-    bakeNow({
-        type: 'replace', page: edState.page,
-        x: it.x, y: it.yBase, w: it.w,
-        size: repSizeAdj || it.sizePt,
-        text: newText, color: document.getElementById('repColor').value,
-        bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
-        _orig: it.text
-    });
-    it.el.classList.remove('sel'); it.el.style.display = 'none';
-    edState.selItem = null; syncRepOpts(false);
-    document.getElementById('repText').value = '';
 }
 const updatePgLabel = () => pgLabel.textContent = 'Page ' + (edState.page + 1) + ' / ' + edState.pageCount;
 canvas.addEventListener('click', e => {
@@ -1318,19 +1361,29 @@ function setMode(m) {
     if (m !== 'replace' && edState.selItem) { edState.selItem.el.classList.remove('sel'); edState.selItem = null; }
 }
 
-document.getElementById('repApply').onclick = () => {
-    const t = document.getElementById('repText').value.trim();
-    if (!t) { alert('Type the replacement text (or use Erase to remove it).'); return; }
-    pushReplaceEdit(t);
+document.getElementById('repErase').onclick = () => {
+    const it = edState.selItem;
+    if (!it || !it.el) return;
+    const el = it.el;
+    el.contentEditable = 'false';
+    el.dataset.cancel = '';
+    el.classList.remove('sel', 'editing');
+    el.removeAttribute('style');
+    resetTlStyle(it);
+    syncRepOpts(false);
+    edState.selItem = null;
+    repSizeAdj = null;
+    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, text: '', color: '#111111', _orig: it.text });
 };
-document.getElementById('repErase').onclick = () => pushReplaceEdit('');
 
 /* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
 let repSizeAdj = null;
 const fmtState = id => document.getElementById(id).classList.contains('on');
 ['repBold', 'repItalic', 'repUnder', 'edBold', 'edItalic', 'edUnder'].forEach(id => {
-    document.getElementById(id).onclick = function () { this.classList.toggle('on'); };
+    document.getElementById(id).onclick = function () { this.classList.toggle('on'); refreshEditingStyle(); };
 });
+document.querySelectorAll('#repOpts button').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
+document.getElementById('repColor').addEventListener('input', refreshEditingStyle);
 function stepSize(d) {
     const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
     repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
