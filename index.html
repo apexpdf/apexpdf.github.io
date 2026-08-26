@@ -366,6 +366,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <select id="repPos" title="Where to place the new text"><option value="same" selected>Same spot</option><option value="below">Below original</option></select>
             <button type="button" class="ghost" id="repApply">Replace</button>
             <button type="button" class="ghost" id="repErase" title="Remove this text from the page">Erase</button>
         </div>
@@ -673,9 +674,11 @@ async function engineEdit(fd) {
         const py = Math.min(height - 2, Math.max(0, height * (1 - (parseFloat(e.y) || 0))));
         if (e.type === 'replace') {
             const size = Math.min(200, Math.max(4, parseFloat(e.size) || 12));
-            const baseY = height * (1 - (parseFloat(e.y) || 0));
+            const baseY = height * (1 - (parseFloat(e.y) || 0));                                  // new text baseline
+            const woY = height * (1 - (parseFloat(e.origY != null ? e.origY : e.y) || 0));        // original baseline
+            const woSize = Math.min(200, Math.max(4, parseFloat(e.origSize) || size));
             const cw = Math.min(width, Math.max(2, (parseFloat(e.w) || 0.1) * width));
-            page.drawRectangle({ x: px - 1.5, y: baseY - size * 0.28, width: cw + 3, height: size * 1.22, color: PDFLib.rgb(1, 1, 1) });
+            page.drawRectangle({ x: px - 1.5, y: woY - woSize * 0.28, width: cw + 3, height: woSize * 1.22, color: PDFLib.rgb(1, 1, 1) });
             const newText = String(e.text == null ? '' : e.text).slice(0, 800);
             if (newText.trim().length) {
                 const f = await pickFont(e);
@@ -1342,9 +1345,15 @@ document.getElementById('repErase').onclick = () => pushReplaceEdit('');
 function pushReplaceEdit(newText) {
     const it = edState.selItem;
     if (!it) { alert('Click a piece of text on the page first.'); return; }
+    const below = document.getElementById('repPos').value === 'below';
+    const lineStep = it.sizePt * 1.4;
+    const newY = below ? Math.max(0.01, it.yBase - lineStep / edState.pageHpt) : it.yBase;
     bakeNow({
         type: 'replace', page: edState.page,
-        x: it.x, y: it.yBase, w: it.w,
+        x: it.x, w: it.w,
+        y: newY,
+        origY: below ? it.yBase : it.yBase,
+        origSize: it.sizePt,
         size: repSizeAdj || it.sizePt,
         text: newText, color: document.getElementById('repColor').value,
         fam: it.fam || 'helvetica',
