@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+  APEX PDF — SaaS Landing Page (single-file, production-ready)
+  ----------------------------------------------------------------------------
+  Stack: HTML + Tailwind CSS (CDN) + vanilla JavaScript. No build step.
+  How to use: open this file in a browser, or deploy as-is to GitHub Pages.
+  File location in repo: apexpdf.github.io/landing.html
+============================================================================= -->
+<html lang="en" class="scroll-smooth">
+<head>
+  <!-- ===== Core meta ===== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX PDF — Free Online PDF Toolkit | Edit, Merge, Split, OCR</title>
+  <meta name="description" content="APEX PDF is a free online PDF toolkit: edit text, merge, split, compress, OCR scans, convert and more. Private by design — files never leave your device.">
+  <meta name="keywords" content="pdf editor, edit pdf, merge pdf, split pdf, compress pdf, ocr pdf, convert pdf, free pdf tools">
+  <meta name="author" content="APEX PDF">
+  <link rel="canonical" href="https://apexpdf.github.io/landing.html">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#7c6daa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12101f" media="(prefers-color-scheme: dark)">
+
+  <!-- ===== Social / Open Graph ===== -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="APEX PDF — Free Online PDF Toolkit">
+  <meta property="og:description" content="Edit, merge, split, compress, OCR and convert PDFs. 100% in your browser. No sign-up.">
+  <meta property="og:url" content="https://apexpdf.github.io/landing.html">
+  <meta property="og:image" content="https://picsum.photos/seed/apexog/1200/630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="APEX PDF — Free Online PDF Toolkit">
+  <meta name="twitter:description" content="Every PDF tool. One beautiful workspace. Free, private, no sign-up.">
+  <meta name="twitter:image" content="https://picsum.photos/seed/apexog/1200/630">
+
+  <!-- ===== Structured data (SEO) ===== -->
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"APEX PDF",
+   "applicationCategory":"UtilitiesApplication","operatingSystem":"Any",
+   "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+   "aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"2314"},
+   "description":"Free online PDF toolkit: edit, merge, split, compress, OCR, convert, organize, rotate and watermark PDFs entirely in the browser."}
+  </script>
+
+  <!-- ===== Fonts: Sora (display) + Inter (body) ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- ===== Icons: Font Awesome 6 ===== -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- ===== Tailwind CSS (CDN) + theme config ===== -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Tailwind theme: brand palette + fonts + glass shadows. Must run after the CDN script. */
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            lavender: '#9b8ec4',      /* primary brand */
+            softpurple: '#7c6daa',   /* secondary brand */
+            mist: '#F5F3FF',         /* light page background */
+            ink: '#1e1b2e',          /* body text on light */
+            night: '#12101f'         /* page background in dark mode */
+          },
+          fontFamily: {
+            display: ['Sora', 'Inter', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif']
+          },
+          boxShadow: {
+            glass: '0 8px 32px rgba(124,109,170,.18)',
+            lift: '0 20px 60px -15px rgba(124,109,170,.35)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* ==========================================================================
+       CSS CUSTOM PROPERTIES (design tokens — single source of truth)
+    ========================================================================== */
+    :root {
+      --lavender: #9b8ec4;
+      --soft-purple: #7c6daa;
+      --mist: #F5F3FF;
+      --ink: #1e1b2e;
+      --muted: #5f5a7a;
+      --glass-bg: rgba(255, 255, 255, 0.62);   /* layered glass panel fill (light) */
+      --glass-brd: rgba(255, 255, 255, 0.65);  /* glass edge highlight */
+      --page-bg: var(--mist);
+      --card-shadow: 0 8px 32px rgba(124, 109, 170, .18);
+      --radius: 1.25rem;
+      --nav-h: 4.25rem;
+    }
+    .dark {
+      --glass-bg: rgba(24, 21, 44, 0.66);      /* glass fill in dark mode */
+      --glass-brd: rgba(155, 142, 196, 0.28);
+      --page-bg: #12101f;
+      --ink: #efeaff;
+      --muted: #b3abd4;
+      --card-shadow: 0 8px 32px rgba(0, 0, 0, .45);
+    }
+
+    /* ===== Base ===== */
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--page-bg);
+      color: var(--ink);
+      transition: background-color .35s ease, color .35s ease;
+    }
+    h1, h2, h3 { font-family: 'Sora', 'Inter', sans-serif; }
+    ::selection { background: var(--lavender); color: #fff; }
+    :focus-visible { outline: 3px solid var(--lavender); outline-offset: 2px; border-radius: .5rem; }
+
+    /* ===== Glasspunk primitives: layered translucent panels + vivid blobs ===== */
+    .glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-brd);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--card-shadow);
+    }
+    .blob { position: absolute; border-radius: 9999px; filter: blur(90px); pointer-events: none; }
+    .blob-a { background: rgba(155, 142, 196, .45); }
+    .blob-b { background: rgba(124, 109, 170, .35); }
+    .blob-c { background: rgba(196, 181, 253, .5); }
+    .dark .blob-a { background: rgba(155, 142, 196, .22); }
+    .dark .blob-b { background: rgba(124, 109, 170, .28); }
+
+    /* ===== Scroll-triggered fade-in (JS adds .visible via IntersectionObserver) ===== */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.3,1); }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-d1 { transition-delay: .08s; } .reveal-d2 { transition-delay: .16s; } .reveal-d3 { transition-delay: .24s; }
+
+    /* ===== Buttons / micro-interactions ===== */
+    .btn { transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0) scale(.98); }
+    .btn-primary {
+      background: linear-gradient(120deg, var(--lavender), var(--soft-purple));
+      color: #fff; box-shadow: 0 12px 30px -8px rgba(124, 109, 170, .6);
+    }
+    .btn-primary:hover { filter: brightness(1.06); box-shadow: 0 18px 40px -8px rgba(124, 109, 170, .7); }
+    .link-underline { position: relative; }
+    .link-underline::after {
+      content: ''; position: absolute; left: 0; bottom: -3px; height: 2px; width: 0;
+      background: currentColor; transition: width .25s ease;
+    }
+    .link-underline:hover::after, .link-underline:focus-visible::after { width: 100%; }
+
+    /* ===== Hero entrance ===== */
+    @keyframes heroRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+    .hero-anim { animation: heroRise .8s cubic-bezier(.2,.7,.3,1) both; }
+    .hero-anim-1 { animation-delay: .05s; } .hero-anim-2 { animation-delay: .15s; }
+    .hero-anim-3 { animation-delay: .25s; } .hero-anim-4 { animation-delay: .35s; }
+    @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .floaty { animation: floaty 6s ease-in-out infinite; }
+
+    /* ===== Logo marquee (trust bar) ===== */
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .marquee-track { animation: marquee 28s linear infinite; }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+
+    /* ===== FAQ accordion (accessible, animated height via JS max-height) ===== */
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+    .faq-item[data-open="true"] .faq-chevron { transform: rotate(180deg); }
+    .faq-chevron { transition: transform .3s ease; }
+
+    /* ===== Pricing toggle switch ===== */
+    .switch { width: 3.25rem; height: 1.75rem; border-radius: 9999px; background: #d9d4f2; position: relative; transition: background .25s; }
+    .switch::after {
+      content: ''; position: absolute; top: .2rem; left: .2rem; width: 1.35rem; height: 1.35rem;
+      border-radius: 9999px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); transition: transform .25s;
+    }
+    .switch[aria-checked="true"] { background: var(--soft-purple); }
+    .switch[aria-checked="true"]::after { transform: translateX(1.5rem); }
+
+    /* ===== Lightbox gallery ===== */
+    #lightbox { transition: opacity .25s ease; }
+    #lightbox.hiddenx { opacity: 0; pointer-events: none; }
+
+    /* ===== Sticky CTA (floating action button) ===== */
+    #stickyCta { transition: opacity .3s ease, transform .3s ease; }
+    #stickyCta.hiddenx { opacity: 0; transform: translateY(16px); pointer-events: none; }
+
+    /* ===== Respect users who prefer reduced motion ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .reveal { opacity: 1; transform: none; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+
+<body class="font-body antialiased">
+  <!-- Skip link (WCAG: keyboard users jump straight to content) -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-white focus:text-ink focus:px-4 focus:py-2 focus:rounded-lg">Skip to main content</a>
+
+  <!-- ================= NAVIGATION (fixed, glass) ================= -->
+  <header class="fixed top-0 inset-x-0 z-50">
+    <nav aria-label="Primary" class="glass border-x-0 border-t-0">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 h-[4.25rem] flex items-center justify-between gap-4">
+        <!-- Brand -->
+        <a href="#top" class="flex items-center gap-2.5" aria-label="APEX PDF home">
+          <span aria-hidden="true" class="w-9 h-9 rounded-xl grid place-items-center text-white font-display font-extrabold text-sm"
+                style="background:linear-gradient(135deg,#9b8ec4,#7c6daa)">AX</span>
+          <span class="font-display font-bold tracking-tight text-lg">APEX&nbsp;PDF</span>
+        </a>
+        <!-- Desktop links -->
+        <ul class="hidden lg:flex items-center gap-8 text-[.95rem] font-medium">
+          <li><a class="link-underline" href="#features">Features</a></li>
+          <li><a class="link-underline" href="#how">How it works</a></li>
+          <li><a class="link-underline" href="#gallery">Gallery</a></li>
+          <li><a class="link-underline" href="#pricing">Pricing</a></li>
+          <li><a class="link-underline" href="#faq">FAQ</a></li>
+        </ul>
+        <div class="hidden lg:flex items-center gap-3">
+          <!-- Dark / light mode toggle -->
+          <button id="themeToggle" type="button" class="btn w-10 h-10 rounded-xl glass grid place-items-center"
+                  aria-label="Toggle dark mode" aria-pressed="false">
+            <i id="themeIcon" class="fa-solid fa-moon" aria-hidden="true"></i>
+          </button>
+          <a href="./index.html" class="btn btn-primary font-semibold text-sm px-5 py-2.5 rounded-xl">Open the app</a>
+        </div>
+        <!-- Mobile controls -->
+        <div class="flex lg:hidden items-center gap-2">
+          <button id="themeToggleMobile" type="button" class="btn w-10 h-10 rounded-xl glass grid place-items-center"
+                  aria-label="Toggle dark mode" aria-pressed="false">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+          </button>
+          <!-- Hamburger -->
+          <button id="menuBtn" type="button" class="btn w-10 h-10 rounded-xl glass grid place-items-center"
+                  aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+            <i id="menuIcon" class="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <!-- Mobile menu panel -->
+      <div id="mobileMenu" class="lg:hidden hidden border-t border-white/40 dark:border-white/10">
+        <ul class="px-6 py-4 space-y-1 font-medium">
+          <li><a href="#features" class="mobile-link block py-2.5">Features</a></li>
+          <li><a href="#how" class="mobile-link block py-2.5">How it works</a></li>
+          <li><a href="#gallery" class="mobile-link block py-2.5">Gallery</a></li>
+          <li><a href="#pricing" class="mobile-link block py-2.5">Pricing</a></li>
+          <li><a href="#faq" class="mobile-link block py-2.5">FAQ</a></li>
+          <li class="pt-2"><a href="./index.html" class="btn btn-primary block text-center font-semibold px-5 py-3 rounded-xl">Open the app</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ================= HERO (full-screen, bg image, centered) ================= -->
+    <section id="top" aria-labelledby="hero-title" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <!-- Background image + brand-tinted overlays for readability -->
+      <img src="https://picsum.photos/seed/apexhero/1920/1280" alt="" aria-hidden="true"
+           class="absolute inset-0 w-full h-full object-cover">
+      <div aria-hidden="true" class="absolute inset-0" style="background:linear-gradient(180deg,rgba(245,243,255,.88),rgba(245,243,255,.72) 55%,rgba(245,243,255,.94))"></div>
+      <div aria-hidden="true" class="absolute inset-0 dark:hidden" style="background:radial-gradient(60% 50% at 50% 20%,rgba(155,142,196,.35),transparent 70%)"></div>
+      <div aria-hidden="true" class="absolute inset-0 hidden dark:block" style="background:linear-gradient(180deg,rgba(18,16,31,.9),rgba(18,16,31,.72) 55%,rgba(18,16,31,.94))"></div>
+      <!-- Vivid glasspunk blobs -->
+      <div aria-hidden="true" class="blob blob-a w-[420px] h-[420px] -left-32 top-24"></div>
+      <div aria-hidden="true" class="blob blob-b w-[380px] h-[380px] -right-24 bottom-10"></div>
+
+      <div class="relative max-w-4xl mx-auto px-5 sm:px-8 pt-32 pb-24 text-center">
+        <p class="hero-anim hero-anim-1 inline-flex items-center gap-2 text-xs font-semibold tracking-[.2em] uppercase
+                  glass rounded-full px-4 py-2">
+          <i class="fa-solid fa-shield-halved text-softpurple" aria-hidden="true"></i>
+          100% private &middot; in-browser only
+        </p>
+        <h1 id="hero-title" class="hero-anim hero-anim-2 font-display font-extrabold tracking-tight
+                                   text-4xl sm:text-6xl lg:text-7xl leading-[1.05] mt-6">
+          Every PDF tool.<br>
+          <span class="text-transparent bg-clip-text" style="background-image:linear-gradient(100deg,#9b8ec4,#7c6daa)">One calm workspace.</span>
+        </h1>
+        <p class="hero-anim hero-anim-3 mt-6 text-lg sm:text-xl text-[#5f5a7a] dark:text-[#b3abd4] max-w-2xl mx-auto">
+          Edit text on the page, merge, split, compress, OCR scans and convert files —
+          free, unlimited, with no sign-up. Your documents never leave your device.
+        </p>
+        <div class="hero-anim hero-anim-4 mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a href="./index.html" class="btn btn-primary font-semibold px-8 py-4 rounded-2xl text-base w-full sm:w-auto">
+            <i class="fa-solid fa-bolt mr-2" aria-hidden="true"></i>Start editing — free
+          </a>
+          <a href="#features" class="btn glass font-semibold px-8 py-4 rounded-2xl text-base w-full sm:w-auto">
+            Explore tools <i class="fa-solid fa-arrow-down ml-2" aria-hidden="true"></i>
+          </a>
+        </div>
+        <!-- Trust row -->
+        <ul class="hero-anim hero-anim-4 mt-9 flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm text-[#5f5a7a] dark:text-[#b3abd4]" aria-label="Highlights">
+          <li><i class="fa-solid fa-check text-softpurple mr-1.5" aria-hidden="true"></i>No sign-up</li>
+          <li><i class="fa-solid fa-check text-softpurple mr-1.5" aria-hidden="true"></i>No watermarks</li>
+          <li><i class="fa-solid fa-check text-softpurple mr-1.5" aria-hidden="true"></i>Works offline*</li>
+          <li><i class="fa-solid fa-star text-amber-400 mr-1.5" aria-hidden="true"></i>4.9/5 from 2,300+ reviews</li>
+        </ul>
+      </div>
+      <!-- Scroll cue -->
+      <a href="#trust" aria-label="Scroll to content"
+         class="absolute bottom-6 left-1/2 -translate-x-1/2 w-11 h-11 rounded-full glass grid place-items-center animate-bounce">
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+      </a>
+    </section>
+
+    <!-- ================= TRUST BAR (logo marquee) ================= -->
+    <section id="trust" aria-label="Trusted by teams" class="relative py-10">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <p class="reveal text-center text-xs font-semibold tracking-[.22em] uppercase text-[#5f5a7a] dark:text-[#b3abd4]">
+          Loved by paperwork-heavy teams
+        </p>
+        <div class="marquee relative mt-5 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]" aria-hidden="true">
+          <div class="marquee-track flex gap-12 w-max text-lg font-display font-bold text-[#5f5a7a] dark:text-[#b3abd4]">
+            <span>NORTHWIND</span><span>ACME&nbsp;CORP</span><span>GLOBEX</span><span>INITECH</span><span>UMBRELLA</span><span>HOOLI</span>
+            <span>NORTHWIND</span><span>ACME&nbsp;CORP</span><span>GLOBEX</span><span>INITECH</span><span>UMBRELLA</span><span>HOOLI</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= STATS (animated counters) ================= -->
+    <section aria-labelledby="stats-title" class="relative py-16 sm:py-24">
+      <h2 id="stats-title" class="sr-only">APEX PDF in numbers</h2>
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal glass rounded-3xl px-8 py-12 grid grid-cols-2 lg:grid-cols-4 gap-10 text-center relative overflow-hidden">
+          <div aria-hidden="true" class="blob blob-c w-72 h-72 -top-20 -right-20"></div>
+          <div>
+            <p class="font-display text-4xl sm:text-5xl font-extrabold"><span class="counter" data-target="2.4" data-decimals="1" data-suffix="M">0</span></p>
+            <p class="mt-2 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">Documents processed</p>
+          </div>
+          <div>
+            <p class="font-display text-4xl sm:text-5xl font-extrabold"><span class="counter" data-target="180" data-suffix="K">0</span></p>
+            <p class="mt-2 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">Monthly users</p>
+          </div>
+          <div>
+            <p class="font-display text-4xl sm:text-5xl font-extrabold"><span class="counter" data-target="12">0</span></p>
+            <p class="mt-2 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">Tools, one workspace</p>
+          </div>
+          <div>
+            <p class="font-display text-4xl sm:text-5xl font-extrabold"><span class="counter" data-target="4.9" data-decimals="1" data-suffix="/5">0</span></p>
+            <p class="mt-2 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">Average rating</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURES (alternating left-right) ================= -->
+    <section id="features" aria-labelledby="features-title" class="relative py-16 sm:py-28 scroll-mt-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center max-w-2xl mx-auto">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">Features</p>
+          <h2 id="features-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3">Built for real paperwork</h2>
+          <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] text-lg">Twelve tools that cover the whole lifecycle of a document — from first draft to signed archive.</p>
+        </div>
+
+        <!-- Row 1: Edit (image right) -->
+        <article class="reveal mt-16 lg:mt-24 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div>
+            <span class="inline-grid place-items-center w-12 h-12 rounded-2xl text-white text-xl" style="background:linear-gradient(135deg,#9b8ec4,#7c6daa)" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></span>
+            <h3 class="font-display text-2xl sm:text-3xl font-bold mt-5">Click any line. Retype it. Done.</h3>
+            <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] leading-relaxed">The editor detects each line's font family, size, weight and color, then bakes your change straight into the PDF. Fix a typo in a contract, swap a date, or erase a stamp — with instant undo.</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem]">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Same-font matching (sans / serif / mono + bold / italic)</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Add text, images, or erase areas like QR codes</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Thumbnail sidebar, zoom, and page navigation</li>
+            </ul>
+            <a href="./index.html#edit" class="btn btn-primary inline-block mt-7 font-semibold px-6 py-3 rounded-xl text-sm">Try the editor</a>
+          </div>
+          <figure class="glass rounded-3xl p-3 floaty">
+            <img src="https://picsum.photos/seed/apexedit/880/620" alt="Preview of the APEX PDF editor with a document page" class="rounded-2xl w-full h-auto" loading="lazy">
+          </figure>
+        </article>
+
+        <!-- Row 2: Organize (image left) -->
+        <article class="reveal mt-16 lg:mt-24 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <figure class="glass rounded-3xl p-3 order-last lg:order-first floaty">
+            <img src="https://picsum.photos/seed/apexmerge/880/620" alt="Merging and organizing PDF pages" class="rounded-2xl w-full h-auto" loading="lazy">
+          </figure>
+          <div class="order-first lg:order-last">
+            <span class="inline-grid place-items-center w-12 h-12 rounded-2xl text-white text-xl" style="background:linear-gradient(135deg,#7c6daa,#4c3f78)" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
+            <h3 class="font-display text-2xl sm:text-3xl font-bold mt-5">Merge, split, reorder in seconds</h3>
+            <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] leading-relaxed">Combine ten invoices into one file. Pull three pages out of a 200-page report. Rotate sideways scans, compress a 40&nbsp;MB deck to mailable size, stamp page numbers.</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem]">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Merge, split to ZIP, delete / extract / reorder pages</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Compress, rotate, watermark and page numbers</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Handles files up to ~100&nbsp;MB in the browser</li>
+            </ul>
+            <a href="./index.html#merge" class="btn btn-primary inline-block mt-7 font-semibold px-6 py-3 rounded-xl text-sm">Combine files</a>
+          </div>
+        </article>
+
+        <!-- Row 3: OCR + convert (image right) -->
+        <article class="reveal mt-16 lg:mt-24 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div>
+            <span class="inline-grid place-items-center w-12 h-12 rounded-2xl text-white text-xl" style="background:linear-gradient(135deg,#b7a9e3,#7c6daa)" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+            <h3 class="font-display text-2xl sm:text-3xl font-bold mt-5">Scans become searchable text</h3>
+            <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] leading-relaxed">OCR reads photographed pages and scanned PDFs in eight languages, then hands you clean text to copy or download. Convert the result to Word, HTML, CSV, JPG or PNG.</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem]">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Tesseract OCR in English, Spanish, French, German + more</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Export to DOCX, TXT, HTML, CSV or page images</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>JPG/PNG to PDF for phone-camera captures</li>
+            </ul>
+            <a href="./index.html#ocr" class="btn btn-primary inline-block mt-7 font-semibold px-6 py-3 rounded-xl text-sm">Extract text</a>
+          </div>
+          <figure class="glass rounded-3xl p-3 floaty">
+            <img src="https://picsum.photos/seed/apexocr/880/620" alt="Scanned document being converted to editable text" class="rounded-2xl w-full h-auto" loading="lazy">
+          </figure>
+        </article>
+
+        <!-- Row 4: Privacy (image left) -->
+        <article class="reveal mt-16 lg:mt-24 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <figure class="glass rounded-3xl p-3 order-last lg:order-first floaty">
+            <img src="https://picsum.photos/seed/apexlock/880/620" alt="Padlock symbolizing private local PDF processing" class="rounded-2xl w-full h-auto" loading="lazy">
+          </figure>
+          <div class="order-first lg:order-last">
+            <span class="inline-grid place-items-center w-12 h-12 rounded-2xl text-white text-xl" style="background:linear-gradient(135deg,#6d9dc5,#7c6daa)" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
+            <h3 class="font-display text-2xl sm:text-3xl font-bold mt-5">Private by architecture, not by promise</h3>
+            <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] leading-relaxed">There is no upload server to breach: pdf-lib, pdf.js and Tesseract all run locally on your machine. Legal, medical and financial documents stay exactly where they belong.</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem]">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>No accounts, no tracking cookies on documents</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>No watermarks stamped on your output</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Open source-friendly, auditable client-side code</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================= HOW IT WORKS ================= -->
+    <section id="how" aria-labelledby="how-title" class="relative py-16 sm:py-28 scroll-mt-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center max-w-2xl mx-auto">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">How it works</p>
+          <h2 id="how-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3">Done in three steps</h2>
+        </div>
+        <ol class="mt-12 grid md:grid-cols-3 gap-6 list-none">
+          <li class="reveal glass rounded-3xl p-8">
+            <span class="font-display font-extrabold text-5xl text-lavender/60" aria-hidden="true">01</span>
+            <h3 class="font-display text-xl font-bold mt-4"><i class="fa-solid fa-cloud-arrow-up mr-2 text-softpurple" aria-hidden="true"></i>Drop your file</h3>
+            <p class="mt-3 text-[#5f5a7a] dark:text-[#b3abd4]">Drag a PDF onto the page or pick any tool. It opens instantly and never uploads anywhere.</p>
+          </li>
+          <li class="reveal reveal-d1 glass rounded-3xl p-8">
+            <span class="font-display font-extrabold text-5xl text-lavender/60" aria-hidden="true">02</span>
+            <h3 class="font-display text-xl font-bold mt-4"><i class="fa-solid fa-sliders mr-2 text-softpurple" aria-hidden="true"></i>Pick a tool</h3>
+            <p class="mt-3 text-[#5f5a7a] dark:text-[#b3abd4]">Edit text on the page, merge, compress, OCR a scan, convert formats or stamp numbers.</p>
+          </li>
+          <li class="reveal reveal-d2 glass rounded-3xl p-8">
+            <span class="font-display font-extrabold text-5xl text-lavender/60" aria-hidden="true">03</span>
+            <h3 class="font-display text-xl font-bold mt-4"><i class="fa-solid fa-download mr-2 text-softpurple" aria-hidden="true"></i>Download</h3>
+            <p class="mt-3 text-[#5f5a7a] dark:text-[#b3abd4]">Processing finishes in seconds in your browser. Hit download — finished, no account needed.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= GALLERY + LIGHTBOX ================= -->
+    <section id="gallery" aria-labelledby="gallery-title" class="relative py-16 sm:py-28 scroll-mt-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center max-w-2xl mx-auto">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">Gallery</p>
+          <h2 id="gallery-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3">Made for every desk</h2>
+          <p class="mt-4 text-[#5f5a7a] dark:text-[#b3abd4] text-lg">Click any image to view it full-screen.</p>
+        </div>
+        <!-- Thumbnail grid: buttons open the lightbox (keyboard accessible) -->
+        <div class="reveal mt-12 grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" role="list">
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg1/1400/900" data-caption="Contracts, fixed in place — no retyping.">
+            <img src="https://picsum.photos/seed/apexg1/640/420" alt="Edited contract on a desk" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg2/1400/900" data-caption="Expense reports merged into one tidy file.">
+            <img src="https://picsum.photos/seed/apexg2/640/420" alt="Stack of invoices being merged" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg3/1400/900" data-caption="Lecture scans, searchable before class.">
+            <img src="https://picsum.photos/seed/apexg3/640/420" alt="Student notes and scanned pages" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg4/1400/900" data-caption="Floor plans stamped and shared.">
+            <img src="https://picsum.photos/seed/apexg4/640/420" alt="Architectural plan with annotations" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg5/1400/900" data-caption="HR packets, organized and numbered.">
+            <img src="https://picsum.photos/seed/apexg5/640/420" alt="Organized paperwork in folders" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+          <button type="button" class="gallery-item group glass rounded-2xl p-2 text-left btn" data-full="https://picsum.photos/seed/apexg6/1400/900" data-caption="Receipts photographed, saved as PDF.">
+            <img src="https://picsum.photos/seed/apexg6/640/420" alt="Phone photo of a receipt" class="rounded-xl w-full h-auto group-hover:scale-[1.02] transition-transform" loading="lazy">
+          </button>
+        </div>
+      </div>
+      <!-- Lightbox overlay -->
+      <div id="lightbox" class="hiddenx fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-8"
+           role="dialog" aria-modal="true" aria-label="Image viewer" style="background:rgba(18,16,31,.85);backdrop-filter:blur(8px)">
+        <button id="lbClose" type="button" class="btn absolute top-5 right-5 w-11 h-11 rounded-full bg-white text-ink grid place-items-center" aria-label="Close viewer">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <button id="lbPrev" type="button" class="btn absolute left-3 sm:left-8 w-11 h-11 rounded-full bg-white text-ink grid place-items-center" aria-label="Previous image">
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+        </button>
+        <figure class="max-w-4xl w-full text-center">
+          <img id="lbImg" src="" alt="" class="max-h-[76vh] w-auto mx-auto rounded-2xl shadow-lift">
+          <figcaption id="lbCaption" class="mt-4 text-white/90"></figcaption>
+        </figure>
+        <button id="lbNext" type="button" class="btn absolute right-3 sm:right-8 w-11 h-11 rounded-full bg-white text-ink grid place-items-center" aria-label="Next image">
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= PRICING ================= -->
+    <section id="pricing" aria-labelledby="pricing-title" class="relative py-16 sm:py-28 scroll-mt-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center max-w-2xl mx-auto">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">Pricing</p>
+          <h2 id="pricing-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3">Free forever. Fair when you grow.</h2>
+          <!-- Billing period toggle -->
+          <div class="mt-6 inline-flex items-center gap-3 glass rounded-full px-5 py-2.5">
+            <span id="labelMonthly" class="text-sm font-semibold">Monthly</span>
+            <button id="billingToggle" type="button" role="switch" class="switch" aria-checked="false" aria-label="Toggle yearly billing"></button>
+            <span id="labelYearly" class="text-sm text-[#5f5a7a] dark:text-[#b3abd4]">Yearly <span class="ml-1 text-xs font-bold text-emerald-600 dark:text-emerald-300">−20%</span></span>
+          </div>
+        </div>
+
+        <div class="mt-12 grid lg:grid-cols-3 gap-6 items-stretch">
+          <!-- Free -->
+          <article class="reveal glass rounded-3xl p-8 flex flex-col">
+            <h3 class="font-display text-xl font-bold">Starter</h3>
+            <p class="mt-1 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">For everyday fixes.</p>
+            <p class="mt-5"><span class="font-display text-5xl font-extrabold">$0</span><span class="text-[#5f5a7a] dark:text-[#b3abd4]"> / forever</span></p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem] flex-1">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>All 12 tools, unlimited use</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Files up to ~100&nbsp;MB</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>No account, no watermarks</li>
+            </ul>
+            <a href="./index.html" class="btn glass text-center font-semibold px-6 py-3.5 rounded-xl mt-8">Start free</a>
+          </article>
+          <!-- Pro (featured) -->
+          <article class="reveal reveal-d1 rounded-3xl p-8 flex flex-col relative overflow-hidden text-white"
+                   style="background:linear-gradient(150deg,#9b8ec4,#7c6daa 70%);box-shadow:0 24px 60px -15px rgba(124,109,170,.55)">
+            <span class="absolute top-5 right-5 text-[.7rem] font-bold tracking-widest uppercase bg-white/20 rounded-full px-3 py-1">Popular</span>
+            <h3 class="font-display text-xl font-bold">Pro</h3>
+            <p class="mt-1 text-sm text-white/80">For freelancers &amp; creators.</p>
+            <p class="mt-5"><span class="font-display text-5xl font-extrabold price" data-monthly="$9" data-yearly="$7">$9</span><span class="text-white/80"> / month</span></p>
+            <p class="bill-note mt-1 text-xs text-white/70">Billed monthly · switch to yearly anytime</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem] flex-1">
+              <li><i class="fa-solid fa-check mr-2" aria-hidden="true"></i>Everything in Starter</li>
+              <li><i class="fa-solid fa-check mr-2" aria-hidden="true"></i>Batch processing &amp; folders</li>
+              <li><i class="fa-solid fa-check mr-2" aria-hidden="true"></i>Priority OCR languages + history</li>
+              <li><i class="fa-solid fa-check mr-2" aria-hidden="true"></i>Email support, same-day replies</li>
+            </ul>
+            <a href="#newsletter" class="btn bg-white text-ink text-center font-semibold px-6 py-3.5 rounded-xl mt-8">Get Pro</a>
+          </article>
+          <!-- Team -->
+          <article class="reveal reveal-d2 glass rounded-3xl p-8 flex flex-col">
+            <h3 class="font-display text-xl font-bold">Team</h3>
+            <p class="mt-1 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">For offices &amp; classrooms.</p>
+            <p class="mt-5"><span class="font-display text-5xl font-extrabold price" data-monthly="$29" data-yearly="$23">$29</span><span class="text-[#5f5a7a] dark:text-[#b3abd4]"> / month</span></p>
+            <p class="bill-note mt-1 text-xs text-[#5f5a7a] dark:text-[#b3abd4]">Billed monthly · switch to yearly anytime</p>
+            <ul class="mt-6 space-y-2.5 text-[.95rem] flex-1">
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Everything in Pro, 10 seats</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Shared templates &amp; presets</li>
+              <li><i class="fa-solid fa-check text-softpurple mr-2" aria-hidden="true"></i>Admin controls + SSO (soon)</li>
+            </ul>
+            <a href="#newsletter" class="btn btn-primary text-center font-semibold px-6 py-3.5 rounded-xl mt-8">Talk to us</a>
+          </article>
+        </div>
+        <p class="reveal text-center text-sm mt-8 text-[#5f5a7a] dark:text-[#b3abd4]">Prices in USD. The free browser toolkit stays free — paid plans fund development.</p>
+      </div>
+    </section>
+
+    <!-- ================= TESTIMONIALS ================= -->
+    <section aria-labelledby="love-title" class="relative py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center max-w-2xl mx-auto">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">Reviews</p>
+          <h2 id="love-title" class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight mt-3">People notice the calm</h2>
+        </div>
+        <div class="mt-10 grid md:grid-cols-3 gap-6">
+          <figure class="reveal glass rounded-3xl p-7">
+            <div class="text-amber-400" aria-label="Rated 5 out of 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <blockquote class="mt-4 leading-relaxed">“Fixed a client contract ten minutes before a signing. The edited line is indistinguishable from the original.”</blockquote>
+            <figcaption class="mt-5 text-sm"><strong>Aarav Mehta</strong><br><span class="text-[#5f5a7a] dark:text-[#b3abd4]">Operations Lead, Northwind</span></figcaption>
+          </figure>
+          <figure class="reveal reveal-d1 glass rounded-3xl p-7">
+            <div class="text-amber-400" aria-label="Rated 5 out of 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <blockquote class="mt-4 leading-relaxed">“Our clinic scans 60 pages a day. OCR + merge turned a filing cabinet into searchable files in a week.”</blockquote>
+            <figcaption class="mt-5 text-sm"><strong>Dr. Lena Fischer</strong><br><span class="text-[#5f5a7a] dark:text-[#b3abd4]">Practice Manager, Globex Health</span></figcaption>
+          </figure>
+          <figure class="reveal reveal-d2 glass rounded-3xl p-7">
+            <div class="text-amber-400" aria-label="Rated 5 out of 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+            <blockquote class="mt-4 leading-relaxed">“IT approved it in one meeting — there's no server, so there's nothing to audit. Students just use it.”</blockquote>
+            <figcaption class="mt-5 text-sm"><strong>Marcus Bell</strong><br><span class="text-[#5f5a7a] dark:text-[#b3abd4]">IT Admin, Initech Schools</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAQ (accordion) ================= -->
+    <section id="faq" aria-labelledby="faq-title" class="relative py-16 sm:py-28 scroll-mt-24">
+      <div class="max-w-3xl mx-auto px-5 sm:px-8">
+        <div class="reveal text-center">
+          <p class="text-xs font-semibold tracking-[.22em] uppercase text-softpurple">FAQ</p>
+          <h2 id="faq-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-3">Questions, answered</h2>
+        </div>
+        <div class="mt-10 space-y-4">
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Do my files ever leave my device?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">No. Every tool runs entirely in your browser with open client-side libraries. Files are processed in memory and never uploaded — we couldn't see them even if we wanted to.</p></div>
+          </div>
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Is the free plan really unlimited?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">Yes — all twelve browser tools are free with no account and no watermarks on output. Paid plans add batch workflows, history and support, and keep the free tier sustainable.</p></div>
+          </div>
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Can I edit a scanned PDF?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">Scans are pictures of text, so run OCR first to recognize the words, or use Add Text / Erase Area to annotate directly on the image. Digital PDFs with real text support click-to-rewrite editing.</p></div>
+          </div>
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Is there a file size limit?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">Browsers comfortably handle files up to about 100&nbsp;MB. For larger decks, split the file first or compress it — both tools are built in.</p></div>
+          </div>
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Does it work offline?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">After your first visit the app shell is cached and all processing is local, so core tools keep working on flaky connections. The libraries need one online load first.</p></div>
+          </div>
+          <div class="reveal faq-item glass rounded-2xl" data-open="false">
+            <button type="button" class="faq-q w-full flex items-center justify-between gap-4 text-left font-semibold px-6 py-5" aria-expanded="false">
+              Can I cancel a paid plan anytime?<i class="faq-chevron fa-solid fa-chevron-down text-softpurple" aria-hidden="true"></i>
+            </button>
+            <div class="faq-answer px-6"><p class="pb-6 text-[#5f5a7a] dark:text-[#b3abd4]">Yes — cancel in one click, keep Pro until the end of the billing period, and fall back to the free tier automatically. Your files are always yours.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA BANNER ================= -->
+    <section aria-labelledby="cta-title" class="relative py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="reveal relative overflow-hidden rounded-3xl p-10 sm:p-16 text-center text-white"
+             style="background:linear-gradient(130deg,#9b8ec4,#7c6daa 60%,#4c3f78)">
+          <div aria-hidden="true" class="blob w-96 h-96 -top-32 -left-24" style="background:rgba(255,255,255,.25)"></div>
+          <h2 id="cta-title" class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight relative">Your PDFs, handled.</h2>
+          <p class="mt-4 text-white/85 text-lg relative">Drop a file and finish in seconds — private, free, no sign-up.</p>
+          <div class="mt-8 flex flex-col sm:flex-row justify-center gap-3 relative">
+            <a href="./index.html" class="btn bg-white text-ink font-semibold px-8 py-4 rounded-2xl">Process a PDF now</a>
+            <a href="#pricing" class="btn font-semibold px-8 py-4 rounded-2xl border border-white/50">Compare plans</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FAT FOOTER (newsletter + links + map + social) ================= -->
+  <footer class="relative mt-8 border-t border-white/40 dark:border-white/10" style="background:rgba(124,109,170,.08)">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-16 grid gap-12 lg:grid-cols-[1.2fr_.8fr_.8fr_1.2fr]">
+      <!-- Brand + social -->
+      <div>
+        <a href="#top" class="flex items-center gap-2.5" aria-label="APEX PDF home">
+          <span aria-hidden="true" class="w-9 h-9 rounded-xl grid place-items-center text-white font-display font-extrabold text-sm" style="background:linear-gradient(135deg,#9b8ec4,#7c6daa)">AX</span>
+          <span class="font-display font-bold text-lg">APEX&nbsp;PDF</span>
+        </a>
+        <p class="mt-4 text-sm leading-relaxed text-[#5f5a7a] dark:text-[#b3abd4]">The calm PDF toolkit — edit, merge, split, OCR and more, entirely in your browser. Free forever for everyday use.</p>
+        <ul class="mt-5 flex gap-2.5" aria-label="Social media">
+          <li><a href="https://github.com/apexpdf" aria-label="GitHub" class="btn glass w-10 h-10 rounded-xl grid place-items-center"><i class="fa-brands fa-github" aria-hidden="true"></i></a></li>
+          <li><a href="https://x.com" aria-label="X (Twitter)" class="btn glass w-10 h-10 rounded-xl grid place-items-center"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a></li>
+          <li><a href="https://linkedin.com" aria-label="LinkedIn" class="btn glass w-10 h-10 rounded-xl grid place-items-center"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a></li>
+          <li><a href="https://youtube.com" aria-label="YouTube" class="btn glass w-10 h-10 rounded-xl grid place-items-center"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a></li>
+        </ul>
+      </div>
+      <!-- Product links -->
+      <nav aria-label="Product">
+        <h2 class="font-display text-sm font-bold tracking-widest uppercase text-softpurple">Product</h2>
+        <ul class="mt-4 space-y-2.5 text-[.95rem]">
+          <li><a class="link-underline" href="#features">All tools</a></li>
+          <li><a class="link-underline" href="./index.html#edit">Edit PDF</a></li>
+          <li><a class="link-underline" href="./index.html#ocr">OCR text</a></li>
+          <li><a class="link-underline" href="./index.html#merge">Merge PDFs</a></li>
+          <li><a class="link-underline" href="#pricing">Pricing</a></li>
+        </ul>
+      </nav>
+      <!-- Company links -->
+      <nav aria-label="Company">
+        <h2 class="font-display text-sm font-bold tracking-widest uppercase text-softpurple">Company</h2>
+        <ul class="mt-4 space-y-2.5 text-[.95rem]">
+          <li><a class="link-underline" href="#how">How it works</a></li>
+          <li><a class="link-underline" href="#gallery">Gallery</a></li>
+          <li><a class="link-underline" href="#faq">FAQ</a></li>
+          <li><a class="link-underline" href="./index.html">Open the app</a></li>
+        </ul>
+      </nav>
+      <!-- Newsletter + map -->
+      <div id="newsletter">
+        <h2 class="font-display text-sm font-bold tracking-widest uppercase text-softpurple">Stay in the loop</h2>
+        <p class="mt-4 text-sm text-[#5f5a7a] dark:text-[#b3abd4]">One short email a month: new tools, tips, no spam.</p>
+        <form id="newsForm" class="mt-4 flex gap-2" novalidate>
+          <label for="newsEmail" class="sr-only">Email address</label>
+          <input id="newsEmail" name="email" type="email" required autocomplete="email" placeholder="you@example.com"
+                 class="glass flex-1 min-w-0 rounded-xl px-4 py-3 text-sm placeholder:text-[#5f5a7a]/70 dark:placeholder:text-[#b3abd4]/60 border border-white/50">
+          <button type="submit" class="btn btn-primary font-semibold px-5 py-3 rounded-xl text-sm">Join</button>
+        </form>
+        <p id="newsMsg" class="mt-2 text-sm min-h-[1.4em]" role="status" aria-live="polite"></p>
+        <div class="mt-4 rounded-2xl overflow-hidden glass p-1.5">
+          <!-- OpenStreetMap embed (no API key needed). Decorative supplement to contact info. -->
+          <iframe title="Map — APEX PDF, New York" loading="lazy" class="w-full h-44 rounded-xl"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=-74.03%2C40.69%2C-73.97%2C40.77&amp;layer=mapnik&amp;marker=40.7128%2C-74.0060"></iframe>
+        </div>
+        <p class="mt-3 text-xs text-[#5f5a7a] dark:text-[#b3abd4]"><i class="fa-solid fa-location-dot mr-1.5" aria-hidden="true"></i>New York, NY · hello@apexpdf.example</p>
+      </div>
+    </div>
+    <div class="border-t border-white/40 dark:border-white/10">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5f5a7a] dark:text-[#b3abd4]">
+        <p>&copy; <span id="yr">2026</span> APEX PDF. All rights reserved.</p>
+        <p>Privacy-first · <a class="link-underline" href="#top">Back to top ↑</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= STICKY CTA (appears after scrolling) ================= -->
+  <a id="stickyCta" href="./index.html"
+     class="hiddenx btn btn-primary fixed bottom-6 right-6 z-[60] font-semibold px-6 py-3.5 rounded-2xl shadow-lift"
+     aria-label="Open the free PDF app">
+    <i class="fa-solid fa-bolt mr-2" aria-hidden="true"></i>Try free
+  </a>
+
+  <script>
+    /* ==========================================================================
+       APEX PDF landing — vanilla JS interactions
+       Sections: theme, mobile menu, smooth scroll, reveal, counters,
+                 pricing toggle, FAQ, lightbox, newsletter, sticky CTA, footer year
+    ========================================================================== */
+    (function () {
+      'use strict';
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      /* ----- 1. Dark / light mode (persisted, respects OS default) ----- */
+      var root = document.documentElement;
+      function paintThemeIcons() {
+        var dark = root.classList.contains('dark');
+        document.querySelectorAll('#themeToggle, #themeToggleMobile').forEach(function (btn) {
+          btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+          var icon = btn.querySelector('i');
+          if (icon) icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        });
+      }
+      function setTheme(dark) {
+        root.classList.toggle('dark', dark);
+        try { localStorage.setItem('apex-theme', dark ? 'dark' : 'light'); } catch (e) {}
+        paintThemeIcons();
+      }
+      (function initTheme() {
+        var saved = null;
+        try { saved = localStorage.getItem('apex-theme'); } catch (e) {}
+        setTheme(saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches);
+      })();
+      ['themeToggle', 'themeToggleMobile'].forEach(function (id) {
+        var b = document.getElementById(id);
+        if (b) b.addEventListener('click', function () { setTheme(!root.classList.contains('dark')); });
+      });
+
+      /* ----- 2. Hamburger mobile menu (accessible expanded state) ----- */
+      var menuBtn = document.getElementById('menuBtn');
+      var mobileMenu = document.getElementById('mobileMenu');
+      var menuIcon = document.getElementById('menuIcon');
+      function setMenu(open) {
+        mobileMenu.classList.toggle('hidden', !open);
+        menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        menuIcon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+      }
+      menuBtn.addEventListener('click', function () { setMenu(mobileMenu.classList.contains('hidden')); });
+      // Close the menu after tapping a link (single-page feel)
+      mobileMenu.querySelectorAll('.mobile-link').forEach(function (a) {
+        a.addEventListener('click', function () { setMenu(false); });
+      });
+
+      /* ----- 3. Smooth scroll with fixed-nav offset (CSS handles most; JS for older Safari) ----- */
+      document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var id = a.getAttribute('href');
+          if (id.length < 2) return;
+          var target = document.querySelector(id);
+          if (!target) return;
+          e.preventDefault();
+          var top = target.getBoundingClientRect().top + window.scrollY - 84;
+          window.scrollTo({ top: top, behavior: prefersReduced ? 'auto' : 'smooth' });
+          history.replaceState(null, '', id);
+        });
+      });
+
+      /* ----- 4. Scroll-triggered fade-in (IntersectionObserver, one-shot) ----- */
+      var revealEls = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && !prefersReduced) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('visible'); io.unobserve(en.target); }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(function (el) { io.observe(el); });
+      } else {
+        revealEls.forEach(function (el) { el.classList.add('visible'); });
+      }
+
+      /* ----- 5. Animated statistic counters (run once when visible) ----- */
+      function animateCounter(el) {
+        var target = parseFloat(el.dataset.target);
+        var decimals = parseInt(el.dataset.decimals || '0', 10);
+        var suffix = el.dataset.suffix || '';
+        if (prefersReduced) { el.textContent = target.toFixed(decimals) + suffix; return; }
+        var dur = 1600, start = null;
+        function frame(t) {
+          if (!start) start = t;
+          var p = Math.min(1, (t - start) / dur);
+          var eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          el.textContent = (target * eased).toFixed(decimals) + suffix;
+          if (p < 1) requestAnimationFrame(frame);
+          else el.textContent = target.toFixed(decimals) + suffix;
+        }
+        requestAnimationFrame(frame);
+      }
+      var counters = document.querySelectorAll('.counter');
+      if ('IntersectionObserver' in window) {
+        var cio = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { animateCounter(en.target); cio.unobserve(en.target); }
+          });
+        }, { threshold: 0.5 });
+        counters.forEach(function (c) { cio.observe(c); });
+      } else {
+        counters.forEach(animateCounter);
+      }
+
+      /* ----- 6. Pricing billing toggle (monthly / yearly) ----- */
+      var billingToggle = document.getElementById('billingToggle');
+      var labelM = document.getElementById('labelMonthly');
+      var labelY = document.getElementById('labelYearly');
+      billingToggle.addEventListener('click', function () {
+        var yearly = billingToggle.getAttribute('aria-checked') !== 'true';
+        billingToggle.setAttribute('aria-checked', yearly ? 'true' : 'false');
+        document.querySelectorAll('.price').forEach(function (p) {
+          p.textContent = yearly ? p.dataset.yearly : p.dataset.monthly;
+        });
+        document.querySelectorAll('.bill-note').forEach(function (n) {
+          n.textContent = yearly ? 'Billed yearly · 2 months free' : 'Billed monthly · switch to yearly anytime';
+        });
+        labelM.classList.toggle('text-[#5f5a7a]', yearly);
+        labelY.classList.toggle('font-semibold', yearly);
+      });
+
+      /* ----- 7. FAQ accordion (one open at a time, ARIA-correct) ----- */
+      var faqItems = document.querySelectorAll('.faq-item');
+      faqItems.forEach(function (item) {
+        var btn = item.querySelector('.faq-q');
+        var ans = item.querySelector('.faq-answer');
+        btn.addEventListener('click', function () {
+          var isOpen = item.dataset.open === 'true';
+          faqItems.forEach(function (other) {
+            other.dataset.open = 'false';
+            other.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+            other.querySelector('.faq-answer').style.maxHeight = '0px';
+          });
+          if (!isOpen) {
+            item.dataset.open = 'true';
+            btn.setAttribute('aria-expanded', 'true');
+            ans.style.maxHeight = ans.scrollHeight + 'px';
+          }
+        });
+      });
+
+      /* ----- 8. Image lightbox gallery (buttons, arrows, ESC, focus return) ----- */
+      var galleryBtns = Array.prototype.slice.call(document.querySelectorAll('.gallery-item'));
+      var lightbox = document.getElementById('lightbox');
+      var lbImg = document.getElementById('lbImg');
+      var lbCaption = document.getElementById('lbCaption');
+      var lbIndex = 0, lastFocus = null;
+      function showLb(i) {
+        lbIndex = (i + galleryBtns.length) % galleryBtns.length;
+        var btn = galleryBtns[lbIndex];
+        lbImg.src = btn.dataset.full;
+        lbImg.alt = btn.querySelector('img').alt;
+        lbCaption.textContent = btn.dataset.caption || '';
+      }
+      function openLb(i) {
+        lastFocus = document.activeElement;
+        showLb(i);
+        lightbox.classList.remove('hiddenx');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('lbClose').focus();
+      }
+      function closeLb() {
+        lightbox.classList.add('hiddenx');
+        document.body.style.overflow = '';
+        lbImg.src = '';
+        if (lastFocus) lastFocus.focus();
+      }
+      galleryBtns.forEach(function (b, i) { b.addEventListener('click', function () { openLb(i); }); });
+      document.getElementById('lbClose').addEventListener('click', closeLb);
+      document.getElementById('lbPrev').addEventListener('click', function (e) { e.stopPropagation(); showLb(lbIndex - 1); });
+      document.getElementById('lbNext').addEventListener('click', function (e) { e.stopPropagation(); showLb(lbIndex + 1); });
+      lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLb(); });
+      document.addEventListener('keydown', function (e) {
+        if (lightbox.classList.contains('hiddenx')) return;
+        if (e.key === 'Escape') closeLb();
+        else if (e.key === 'ArrowLeft') showLb(lbIndex - 1);
+        else if (e.key === 'ArrowRight') showLb(lbIndex + 1);
+      });
+
+      /* ----- 9. Newsletter form (inline validation + friendly confirmation) ----- */
+      var form = document.getElementById('newsForm');
+      var email = document.getElementById('newsEmail');
+      var msg = document.getElementById('newsMsg');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var val = email.value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
+          msg.textContent = 'Please enter a valid email address.';
+          msg.className = 'mt-2 text-sm text-red-500';
+          email.focus();
+          return;
+        }
+        msg.textContent = 'You’re in! Check your inbox to confirm.';
+        msg.className = 'mt-2 text-sm text-emerald-600 dark:text-emerald-300';
+        form.reset();
+      });
+
+      /* ----- 10. Sticky CTA (slides in after scrolling past the hero) ----- */
+      var sticky = document.getElementById('stickyCta');
+      function onScroll() { sticky.classList.toggle('hiddenx', window.scrollY < 620); }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      /* ----- 11. Footer year ----- */
+      document.getElementById('yr').textContent = new Date().getFullYear();
+    })();
+  </script>
+</body>
+</html>
