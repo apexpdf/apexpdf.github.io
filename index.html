@@ -538,7 +538,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
-            <select id="repFont" title="Font family (auto-detected)" style="max-width:120px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+            <select id="repFont" title="Font family (auto-detected)" style="max-width:130px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="custom">Custom font…</option></select>
+            <input type="file" id="repFontFile" accept=".ttf,.otf,.ttc" hidden>
             <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -943,7 +944,22 @@ async function engineEdit(fd) {
         r: await doc.embedFont(SF.Courier), b: await doc.embedFont(SF.CourierBold),
         i: await doc.embedFont(SF.CourierOblique), bi: await doc.embedFont(SF.CourierBoldOblique)
     };
+    // User-uploaded font (sent as 'fontCustom' in the form data). One file covers
+    // all four slots — letterforms stay exact; weight follows the uploaded file.
+    let customFam = null;
+    if (fd.get('fontCustom')) {
+        try {
+            const cf = await doc.embedFont(await fd.get('fontCustom').arrayBuffer());
+            customFam = { r: cf, b: cf, i: cf, bi: cf };
+        } catch (err) {
+            throw new Error('That font file could not be used — please pick a .ttf or .otf file.');
+        }
+    }
     const pickFont = e => {
+        if (e.family === 'custom') {
+            if (!customFam) throw new Error('Custom font not attached — pick the font file again.');
+            return e.bold && e.italic ? customFam.bi : e.bold ? customFam.b : e.italic ? customFam.i : customFam.r;
+        }
         const fam = F[e.family] || F['sans'];
         return e.bold && e.italic ? fam.bi : e.bold ? fam.b : e.italic ? fam.i : fam.r;
     };
@@ -1739,7 +1755,8 @@ function selectLine(item) {
     item._col = sampleTextColor(item);
     try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(item._col) ? item._col : '#111111'; } catch (e) {}
     setFmt('repBold', item.bold); setFmt('repItalic', item.italic); setFmt('repUnder', false);
-    try { document.getElementById('repFont').value = item.family || 'sans'; } catch (e) {}
+        try { document.getElementById('repFont').value = item.family || 'sans'; } catch (e) {}
+        updateRepPreviewFont();
     repSizeAdj = null;
     document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
     const ta = document.getElementById('repText');
@@ -1770,6 +1787,11 @@ function deselectLine() {
 function applyRepLine() {
     const it = edState.selItem;
     if (!it) return;
+    if (document.getElementById('repFont').value === 'custom' && !customFontBytes) {
+        edMsg.textContent = 'Pick your .ttf/.otf font file first.'; edMsg.className = 'msg err';
+        document.getElementById('repFontFile').click();
+        return;
+    }
     const ta = document.getElementById('repText');
     const newText = ta.value.split(String.fromCharCode(160)).join(' ');
     const col = it._col || '#111111';
@@ -1906,6 +1928,50 @@ document.getElementById('repColor').addEventListener('input', refreshEditingStyl
 document.getElementById('repFont').addEventListener('change', refreshEditingStyle);
 document.getElementById('edFont').addEventListener('change', refreshEditingStyle);
 document.getElementById('edColor').addEventListener('input', refreshEditingStyle);
+/* ---- custom uploaded font for replacements (never leaves the device) ---- */
+let customFontBytes = null, customFontName = '';
+async function loadCustomFont(file) {
+    if (!file) return;
+    try {
+        const bytes = (await file.arrayBuffer()).slice(0);
+        // Validate: must embed cleanly into a scratch PDF first
+        await (await PDFLib.PDFDocument.create()).embedFont(bytes.slice(0));
+        customFontBytes = bytes;
+        customFontName = file.name || 'custom-font.ttf';
+        // Live preview inside the replacement box
+        try {
+            const face = new FontFace('ApexCustomFont', bytes.slice(0));
+            await face.load();
+            document.fonts.add(face);
+        } catch (e) {}
+        const sel = document.getElementById('repFont');
+        sel.value = 'custom';
+        const opt = sel.querySelector('option[value="custom"]');
+        if (opt) opt.textContent = 'Custom (' + customFontName.replace(/\.(ttf|otf|ttc)$/i, '').slice(0, 18) + ')';
+        updateRepPreviewFont();
+        toast('Font loaded: ' + customFontName);
+        edMsg.textContent = 'Custom font ready — Apply to use it.'; edMsg.className = 'msg ok';
+    } catch (err) {
+        customFontBytes = null;
+        document.getElementById('repFont').value = 'sans';
+        updateRepPreviewFont();
+        edMsg.textContent = 'Could not use that font — please pick a .ttf or .otf file.'; edMsg.className = 'msg err';
+    }
+    document.getElementById('repFontFile').value = '';
+}
+function updateRepPreviewFont() {
+    const ta = document.getElementById('repText');
+    if (!ta) return;
+    ta.style.fontFamily = (document.getElementById('repFont').value === 'custom' && customFontBytes)
+        ? "'ApexCustomFont',sans-serif" : '';
+}
+document.getElementById('repFontFile').addEventListener('change', e => loadCustomFont(e.target.files[0]));
+document.getElementById('repFont').addEventListener('change', () => {
+    if (document.getElementById('repFont').value === 'custom' && !customFontBytes) {
+        document.getElementById('repFontFile').click();
+    }
+    updateRepPreviewFont();
+});
 function stepSize(d) {
     const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
     repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
@@ -1936,6 +2002,10 @@ async function bakeNow(edit, extraImgs) {
         fd.append('file', edState.file);
         fd.append('edits', JSON.stringify([edit]));
         (extraImgs || []).forEach(o => fd.append(o.key, o.file));
+        // Attach the user-picked font whenever the edit asks for it
+        if (edit.family === 'custom' && customFontBytes) {
+            fd.append('fontCustom', new Blob([customFontBytes], { type: 'font/ttf' }), customFontName || 'custom-font.ttf');
+        }
         const out = new Blob([await engineEdit(fd)], { type: 'application/pdf' });
         await reloadFromBlob(out);
         refreshThumb(edState.page);
