@@ -3,13 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEXPDF — The Complete PDF Toolkit</title>
-<meta name="description" content="APEXPDF — free online PDF toolkit: edit PDF text, merge, split, organize pages, rotate, watermark and OCR text recognition. Fast, private, no signup.">
-<meta name="keywords" content="pdf editor, edit pdf, merge pdf, split pdf, ocr pdf, extract text from pdf, watermark pdf, rotate pdf">
+<title>APEXPDF — Free Online PDF Toolkit: Edit, Merge, Split, OCR, Convert</title>
+<meta name="description" content="APEXPDF — free online PDF toolkit: edit PDF text, merge, split, compress, organize pages, rotate, add page numbers, watermark, extract images and OCR. Fast, private, no signup.">
+<meta name="keywords" content="pdf editor, edit pdf, merge pdf, split pdf, compress pdf, ocr pdf, extract text from pdf, watermark pdf, rotate pdf, jpg to pdf, add page numbers">
+<link rel="canonical" href="https://apexpdf.github.io/">
+<meta name="robots" content="index, follow">
 <meta property="og:title" content="APEXPDF — The Complete Online PDF Toolkit">
-<meta property="og:description" content="Edit existing PDF text, merge, split, OCR and more. Processed in memory — files are never stored.">
+<meta property="og:description" content="Edit existing PDF text, merge, split, compress, OCR and more. Processed in memory — files are never stored.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://apexpdf.github.io/">
+<meta property="og:image" content="https://apexpdf.github.io/favicon.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="APEXPDF — Free Online PDF Toolkit">
+<meta name="twitter:description" content="Edit, merge, split, compress, OCR, convert and more — 100% in your browser.">
+<meta name="twitter:image" content="https://apexpdf.github.io/favicon.svg">
 <meta name="theme-color" content="#4f46e5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="favicon.svg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"APEXPDF","url":"https://apexpdf.github.io/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"},"description":"Free online PDF toolkit: edit, merge, split, compress, OCR, convert, organize, rotate, watermark."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do my files leave my device?","acceptedAnswer":{"@type":"Answer","text":"No. All processing runs inside your browser with pdf-lib, pdf.js and Tesseract. Files are never uploaded."}},{"@type":"Question","name":"Is APEXPDF free?","acceptedAnswer":{"@type":"Answer","text":"Yes — unlimited free use, no sign-up, no watermarks on output."}},{"@type":"Question","name":"Can I edit existing PDF text?","acceptedAnswer":{"@type":"Answer","text":"Yes. Open Edit PDF, click any text line and retype. Press Enter or click outside to bake the change instantly."}},{"@type":"Question","name":"What is the file size limit?","acceptedAnswer":{"@type":"Answer","text":"Browsers handle up to ~100 MB comfortably. Larger files may be slow on low-memory devices."}}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6782833833975102" crossorigin="anonymous"></script><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d6bff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='26' font-weight='900' fill='white' text-anchor='middle'%3EAX%3C/text%3E%3C/svg%3E">
 <style>/* ============ APEXPDF DESIGN SYSTEM v2 ============ */
 :root {
@@ -233,21 +245,86 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { background: var(--acc-soft); border: 1px solid #dfe4ff; color: var(--acc-hov); padding: 5px 12px; border-radius: 999px; font-size: .77rem; font-weight: 550; display: inline-flex; align-items: center; gap: 8px; }
 .chip button { background: none; border: none; color: var(--err); cursor: pointer; font-weight: 700; font-size: .95rem; padding: 0; line-height: 1; }
+/* ---------- UPGRADE PACK ---------- */
+.skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 0 0 10px 0; z-index: 200; font-weight: 600; font-size: .9rem; }
+.skip:focus { left: 0; }
+.nav-cta { background: var(--acc); color: #fff !important; padding: 9px 16px; border-radius: 10px; font-weight: 600 !important; }
+.nav-cta:hover { background: var(--acc-hov); color: #fff !important; }
+.menu-btn { display: none; background: none; border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; cursor: pointer; font-size: 1.05rem; color: var(--ink); }
+.tools-bar { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: flex; gap: 10px; align-items: center; }
+.search-wrap { position: relative; flex: 1; max-width: 420px; margin: 0 auto 22px; }
+.search-wrap input { width: 100%; padding-left: 40px; }
+.search-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--ink2); }
+.tile .badge { position: absolute; top: 14px; right: 14px; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--ink); color: #fff; border-radius: 999px; padding: 3px 9px; }
+.tile .badge.pop { background: linear-gradient(92deg,#4f46e5,#9333ea); }
+.tile kbd { display: block; margin-top: 10px; font-family: inherit; font-size: .72rem; color: var(--ink2); }
+.how, .feats, .faq-wrap, .cta-wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px 64px; }
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 16px; }
+.how-card { border: 1px solid var(--line); border-radius: 14px; padding: 22px; background: #fff; }
+.how-card b { display: flex; align-items: center; gap: 10px; font-size: .98rem; margin-bottom: 8px; }
+.how-num { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-soft); color: var(--acc); display: grid; place-items: center; font-size: .82rem; font-weight: 800; flex: none; }
+.how-card p { color: var(--ink2); font-size: .88rem; line-height: 1.6; }
+.feat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 16px; }
+.feat { border: 1px solid var(--line); border-radius: 14px; padding: 22px; background: var(--bg-soft); }
+.feat h3 { font-size: .95rem; margin-bottom: 6px; }
+.feat p { color: var(--ink2); font-size: .86rem; line-height: 1.6; }
+.faq { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:last-child { border-bottom: none; }
+.faq summary { cursor: pointer; padding: 16px 20px; font-weight: 600; font-size: .93rem; list-style: none; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; color: var(--acc); font-weight: 800; font-size: 1.1rem; }
+.faq details[open] summary::after { content: '–'; }
+.faq .a { padding: 0 20px 18px; color: var(--ink2); font-size: .89rem; line-height: 1.65; }
+.cta { background: linear-gradient(120deg,#312e81,#4f46e5 45%,#7c3aed); border-radius: 20px; color: #fff; padding: 44px 32px; text-align: center; }
+.cta h2 { font-size: clamp(1.5rem,3vw,2rem); letter-spacing: -.02em; }
+.cta p { opacity: .85; margin-top: 10px; }
+.cta button { margin-top: 20px; background: #fff; color: var(--acc-hov); border: none; border-radius: 12px; padding: 13px 26px; font-weight: 700; font-size: .95rem; cursor: pointer; font-family: inherit; }
+.cta button:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+#toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast { background: var(--ink); color: #fff; border-radius: 12px; padding: 11px 18px; font-size: .87rem; font-weight: 550; box-shadow: 0 16px 40px rgba(2,6,23,.35); animation: fadeUp .25s ease; max-width: min(92vw,480px); text-align: center; }
+.progress { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
+.progress.show { display: block; }
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,var(--acc),#9333ea); border-radius: 999px; transition: width .2s; }
+.stats { display: flex; gap: 26px; justify-content: center; margin-top: 26px; flex-wrap: wrap; }
+.stat b { display: block; font-size: 1.25rem; letter-spacing: -.02em; }
+.stat span { color: var(--ink2); font-size: .8rem; font-weight: 500; }
+@media (max-width: 760px) {
+  .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; background: #fff; border-bottom: 1px solid var(--line); flex-direction: column; padding: 12px 24px 18px; gap: 4px; align-items: stretch; }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: 10px 4px; font-size: .95rem; border-bottom: 1px solid var(--bg-soft); }
+  .menu-btn { display: block; }
+  .footer-in { grid-template-columns: 1fr; gap: 28px; }
+  .box { padding: 22px 18px; }
+  #m-edit .box { height: 100dvh; }
+  .ed-top { flex-wrap: wrap; overflow-x: auto; }
+  .hero { padding: 48px 18px 40px; }
+  .tools { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 12px; padding-bottom: 56px; }
+  .tile { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 <script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021971&siteid=406308" async></script>
 </head>
 <body>
+<a class="skip" href="#tools">Skip to tools</a>
 
 <div id="libErr" style="display:none;background:#fef2f2;border-bottom:1px solid #fecaca;color:#b91c1c;font-size:.88rem;font-weight:550;text-align:center;padding:10px 18px;">Couldn't load the PDF engine from CDN. Check your internet connection and reload.</div>
 <div id="jsErr" style="display:none;background:#fffbeb;border-bottom:1px solid #fde68a;color:#92400e;font-size:.88rem;font-weight:550;text-align:center;padding:10px 18px;">Something went wrong loading this page — press Ctrl+F5 to force a refresh.</div>
 
-<nav><div class="nav-in">
+<nav aria-label="Main"><div class="nav-in">
     <div class="logo"><div class="logo-mark">AX</div>APEX<span style="color:#4f46e5;">PDF</span></div>
-    <div class="nav-links">
+    <div class="nav-links" id="navLinks">
         <a href="#tools">All Tools</a>
+        <a href="#how">How it works</a>
+        <a href="#faq">FAQ</a>
         <a href="#" onclick="openModalById('m-privacy');return false;">Privacy</a>
+        <a href="#tools" class="nav-cta" onclick="document.getElementById('heroDrop').scrollIntoView({behavior:'smooth',block:'center'});return false;">Start free</a>
     </div>
+    <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
 </div></nav>
+
+<main>
 
 <header class="hero">
     <div class="hero3d" aria-hidden="true"><div class="doc-stack">
@@ -263,14 +340,15 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <span class="titem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Files never leave your device</span>
         <span class="titem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Works in your browser</span>
     </div>
-    <div class="hero-drop" id="heroDrop">
+    <div class="hero-drop" id="heroDrop" role="button" tabindex="0" aria-label="Upload a PDF to start">
         <div class="hd-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg></div>
         <b>Drop a PDF here</b>
-        <small>or click to browse your files</small>
+        <small>or click to browse your files · up to 100 MB · never uploaded</small>
         <input type="file" id="heroInput" accept="application/pdf" hidden>
-        <div class="hero-file" id="heroFile"></div>
+        <div class="hero-file" id="heroFile" aria-live="polite"></div>
         <div class="quick-actions" id="quickActions"></div>
     </div>
+    <div class="stats" aria-label="Highlights"><div class="stat"><b>12 tools</b><span>one workspace</span></div><div class="stat"><b>100% private</b><span>in-browser only</span></div><div class="stat"><b>0 sign-up</b><span>unlimited free</span></div></div>
 </header>
 
 <div class="section-head">
@@ -279,30 +357,44 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <p class="section-sub">Click any tool to begin — no account, no watermarks on output.</p>
 </div>
 
+<div class="tools-bar"><div class="search-wrap"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="toolSearch" placeholder="Search tools…  ( press / )" aria-label="Search tools"></div></div>
+
 <div class="tools" id="tools">
-    <button class="tile" data-open="edit"><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div><h3>Edit PDF</h3><p>Rewrite existing text, add text &amp; images</p></button>
-    <button class="tile" data-open="ocr"><div class="tile-icon teal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg></div><h3>OCR Text</h3><p>Extract text from scans & images</p></button>
-    <button class="tile" data-open="convert"><div class="tile-icon violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 2 14 9 21 9"/><path d="M8 15h8"/><path d="m13 18 3-3-3-3"/></svg></div><h3>Convert PDF</h3><p>To JPG, PNG, Word, Text, HTML or CSV</p></button>
-    <button class="tile" data-open="img2pdf"><div class="tile-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div><h3>JPG to PDF</h3><p>Turn images into a single PDF</p></button>
-    <button class="tile" data-open="merge"><div class="tile-icon violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/></svg></div><h3>Merge PDFs</h3><p>Combine multiple files into one</p></button>
-    <button class="tile" data-open="split"><div class="tile-icon amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8.2 7.8 20 19M8.2 16.2 20 5"/></svg></div><h3>Split PDF</h3><p>Break a PDF into single pages (ZIP)</p></button>
-    <button class="tile" data-open="organize"><div class="tile-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h13"/><path d="m17 10 3 2-3 2"/></svg></div><h3>Organize Pages</h3><p>Delete, extract or reorder pages</p></button>
-    <button class="tile" data-open="rotate"><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></div><h3>Rotate Pages</h3><p>Turn pages 90°, 180° or 270°</p></button>
-    <button class="tile" data-open="watermark"><div class="tile-icon red"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12Z"/></svg></div><h3>Watermark</h3><p>Stamp text across every page</p></button>
+    <button class="tile" data-open="edit" data-keys="edit rewrite text add image erase"><span class="badge pop">Popular</span><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div><h3>Edit PDF</h3><p>Rewrite existing text, add text &amp; images</p></button>
+    <button class="tile" data-open="compress" data-keys="compress shrink reduce size optimize"><span class="badge pop">New</span><div class="tile-icon teal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5 9.5 9 4 3.5M20 14.5 14.5 9 20 3.5M9 9h11M4 21h16"/></svg></div><h3>Compress PDF</h3><p>Shrink file size, keep quality</p></button>
+    <button class="tile" data-open="ocr" data-keys="ocr scan recognize extract text image"><div class="tile-icon teal"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg></div><h3>OCR Text</h3><p>Extract text from scans & images</p></button>
+    <button class="tile" data-open="convert" data-keys="convert jpg png word docx txt html csv export"><div class="tile-icon violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 2 14 9 21 9"/><path d="M8 15h8"/><path d="m13 18 3-3-3-3"/></svg></div><h3>Convert PDF</h3><p>To JPG, PNG, Word, Text, HTML or CSV</p></button>
+    <button class="tile" data-open="img2pdf" data-keys="jpg png image to pdf photo"><div class="tile-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div><h3>JPG to PDF</h3><p>Turn images into a single PDF</p></button>
+    <button class="tile" data-open="extract" data-keys="extract images pictures photos export"><span class="badge">New</span><div class="tile-icon amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11l2.5 2.5L14 10l3 3"/><circle cx="9" cy="8" r="1.4"/></svg></div><h3>Extract Images</h3><p>Save page images as ZIP</p></button>
+    <button class="tile" data-open="pagenum" data-keys="page numbers footer header numbering"><span class="badge">New</span><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/><path d="M17 16l4 4m0-4l-4 4"/></svg></div><h3>Page Numbers</h3><p>Stamp numbers on every page</p></button>
+    <button class="tile" data-open="merge" data-keys="merge combine join append"><div class="tile-icon violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/></svg></div><h3>Merge PDFs</h3><p>Combine multiple files into one</p></button>
+    <button class="tile" data-open="split" data-keys="split divide pages zip"><div class="tile-icon amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8.2 7.8 20 19M8.2 16.2 20 5"/></svg></div><h3>Split PDF</h3><p>Break a PDF into single pages (ZIP)</p></button>
+    <button class="tile" data-open="organize" data-keys="organize delete extract reorder pages"><div class="tile-icon green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h13"/><path d="m17 10 3 2-3 2"/></svg></div><h3>Organize Pages</h3><p>Delete, extract or reorder pages</p></button>
+    <button class="tile" data-open="rotate" data-keys="rotate turn landscape portrait"><div class="tile-icon blue"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></div><h3>Rotate Pages</h3><p>Turn pages 90°, 180° or 270°</p></button>
+    <button class="tile" data-open="watermark" data-keys="watermark stamp confidential draft"><div class="tile-icon red"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12Z"/></svg></div><h3>Watermark</h3><p>Stamp text across every page</p></button>
 </div>
+
+<section class="how" id="how"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">How it works</span><h2 class="section-title">Done in 3 steps</h2></div><div class="how-grid"><div class="how-card"><b><span class="how-num">1</span>Drop your file</b><p>Drag a PDF onto the hero dropzone or any tool. It stays on your device — nothing is uploaded, ever.</p></div><div class="how-card"><b><span class="how-num">2</span>Pick a tool</b><p>Edit text on the page, merge, compress, OCR a scan, convert, number pages or stamp a watermark.</p></div><div class="how-card"><b><span class="how-num">3</span>Download</b><p>Processing happens instantly in your browser. Hit Download and you're done — no account, no watermark.</p></div></div></section>
+<section class="feats"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">Why APEXPDF</span><h2 class="section-title">Private by design</h2></div><div class="feat-grid"><div class="feat"><h3>🔒 Files never leave your device</h3><p>Built on pdf-lib, pdf.js and Tesseract running locally. We couldn't see your documents even if we wanted to.</p></div><div class="feat"><h3>⚡ Instant, no queues</h3><p>No uploads, no waiting rooms, no credits. Small files finish in under a second.</p></div><div class="feat"><h3>📱 Works everywhere</h3><p>Any modern browser on desktop or mobile. Installable as an app, works offline after first load.</p></div><div class="feat"><h3>♾️ Unlimited &amp; free</h3><p>No sign-up, no watermarks on output, no daily caps for normal use.</p></div></div></section>
+<section class="faq-wrap" id="faq"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">FAQ</span><h2 class="section-title">Questions, answered</h2></div><div class="faq"><details open><summary>Do my files leave my device?</summary><div class="a">No. Every tool runs 100% client-side in your browser. Your PDFs are processed in memory and never uploaded to any server.</div></details><details><summary>Is it really free?</summary><div class="a">Yes — unlimited free use with no account and no watermarks stamped on your output.</div></details><details><summary>How do I edit existing PDF text?</summary><div class="a">Open Edit PDF, drop your file, then click any text line directly on the page. Retype, press Enter or click outside — the change is baked in instantly. Use Undo if you make a mistake.</div></details><details><summary>What about scanned PDFs?</summary><div class="a">Scans are images, not text. Use OCR Text to recognize the words first (English, Spanish, French, German and more), then copy or download the result.</div></details><details><summary>Is there a file size limit?</summary><div class="a">Browsers comfortably handle files up to ~100 MB. Very large or image-heavy PDFs may be slower on phones — try Compress PDF or split the file first.</div></details><details><summary>Does it work offline?</summary><div class="a">After your first visit the app shell is cached, and all processing is local — so core tools keep working with a flaky connection. CDN libraries need one online load first.</div></details></div></section>
+<section class="cta-wrap"><div class="cta"><h2>Your PDFs, handled.</h2><p>Drop a file and finish in seconds — private, free, no sign-up.</p><button type="button" onclick="document.getElementById('heroDrop').scrollIntoView({behavior:'smooth',block:'center'})">Process a PDF now</button></div></section>
+</main>
 
 <footer class="site">
     <div class="footer-in">
         <div class="fbrand">
             <div class="logo"><div class="logo-mark">AX</div>APEX<span style="color:#818cf8;">PDF</span></div>
-            <p>The complete PDF toolkit — edit existing text, convert, merge, split, OCR and more. Everything runs inside your browser: your documents never leave your device.</p>
+            <p>The complete PDF toolkit — edit existing text, convert, merge, split, compress, OCR and more. Everything runs inside your browser: your documents never leave your device.</p>
         </div>
         <div class="fcol">
             <h4>Tools</h4>
             <button class="flink" data-modal-link="edit">Edit PDF</button>
+            <button class="flink" data-modal-link="compress">Compress PDF</button>
             <button class="flink" data-modal-link="ocr">OCR Text Recognition</button>
             <button class="flink" data-modal-link="convert">Convert PDF</button>
             <button class="flink" data-modal-link="img2pdf">JPG to PDF</button>
+            <button class="flink" data-modal-link="extract">Extract Images</button>
+            <button class="flink" data-modal-link="pagenum">Page Numbers</button>
             <button class="flink" data-modal-link="merge">Merge PDFs</button>
             <button class="flink" data-modal-link="split">Split PDF</button>
             <button class="flink" data-modal-link="organize">Organize Pages</button>
@@ -314,6 +406,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button class="flink" onclick="openModalById('m-privacy')">Privacy Policy</button>
             <button class="flink" onclick="openModalById('m-terms')">Terms of Service</button>
             <button class="flink" onclick="document.getElementById('tools').scrollIntoView({behavior:'smooth'})">All Tools</button>
+            <button class="flink" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</button>
+            <button class="flink" onclick="document.getElementById('faq').scrollIntoView({behavior:'smooth'})">FAQ</button>
         </div>
     </div>
     <div class="footer-bar">
@@ -321,14 +415,15 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <span>100% client-side · pdf-lib · pdf.js · Tesseract OCR</span>
     </div>
 </footer>
+<div id="toasts" aria-live="polite"></div>
 
 <div class="modal" id="m-privacy"><div class="box">
     <button class="mx" data-close>&times;</button>
-    <h2>Privacy Policy</h2><p class="sub">Last updated: today</p>
+    <h2>Privacy Policy</h2><p class="sub">Last updated: September 2026</p>
     <div style="font-size:.9rem;color:var(--ink2);line-height:1.7;">
         <p><b style="color:var(--ink);">Your files.</b> All tools run entirely inside your web browser. Your documents are never uploaded to any server — they never leave your device, full stop. We could not look at your files even if we wanted to.</p>
         <p style="margin-top:10px;"><b style="color:var(--ink);">Usage data.</b> APEXPDF sets no tracking cookies and runs no third-party analytics on your documents.</p>
-        <p style="margin-top:10px;"><b style="color:var(--ink);">Contact.</b> Questions about this policy: contact [your-email@example.com].</p>
+        <p style="margin-top:10px;"><b style="color:var(--ink);">Contact.</b> Questions about this policy: contact via your GitHub repository issues page.</p>
     </div>
 </div></div>
 
@@ -448,6 +543,44 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <div class="msg"></div>
 </div></div>
 
+<div class="modal" id="m-compress"><div class="box">
+    <button class="mx" data-close>&times;</button>
+    <h2>Compress PDF</h2><p class="sub">Rebuilds the file with object streams and cleans metadata. Best for text/office PDFs (10–40% smaller).</p>
+    <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
+    <div class="fname"></div>
+    <div class="progress" id="cpProg"><i></i></div>
+    <button class="go" id="cpGo">Compress &amp; Download</button>
+    <div class="msg" aria-live="polite"></div>
+</div></div>
+
+<div class="modal" id="m-pagenum"><div class="box">
+    <button class="mx" data-close>&times;</button>
+    <h2>Page Numbers</h2><p class="sub">Stamps “1, 2, 3…” on every page. Pick position and style.</p>
+    <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
+    <div class="fname"></div>
+    <div class="row">
+        <select id="pnPos" style="max-width:190px;"><option value="bottom-center" selected>Bottom center</option><option value="bottom-right">Bottom right</option><option value="bottom-left">Bottom left</option><option value="top-center">Top center</option><option value="top-right">Top right</option></select>
+        <select id="pnStyle" style="max-width:190px;"><option value="n" selected>1, 2, 3</option><option value="n-total">1 / 12</option><option value="page-n">Page 1</option></select>
+        <input type="text" id="pnStart" placeholder="Start at (default 1)" inputmode="numeric" style="max-width:150px;">
+    </div>
+    <button class="go" id="pnGo">Add Numbers &amp; Download</button>
+    <div class="msg" aria-live="polite"></div>
+</div></div>
+
+<div class="modal" id="m-extract"><div class="box">
+    <button class="mx" data-close>&times;</button>
+    <h2>Extract Images</h2><p class="sub">Renders each page as a high-resolution image and downloads a ZIP (single page downloads directly).</p>
+    <div class="dz"><div class="dz-label">Drop a PDF here or click to browse</div><input type="file" accept="application/pdf"></div>
+    <div class="fname"></div>
+    <div class="row">
+        <select id="exFormat" style="max-width:190px;"><option value="png" selected>PNG images</option><option value="jpg">JPG images</option></select>
+        <input type="text" id="exPages" placeholder="Pages e.g. 1-3 · blank = all">
+    </div>
+    <div class="progress" id="exProg"><i></i></div>
+    <button class="go" id="exGo">Extract &amp; Download</button>
+    <div class="msg" aria-live="polite"></div>
+</div></div>
+
 <div class="modal" id="m-merge"><div class="box">
     <button class="mx" data-close>&times;</button>
     <h2>Merge PDFs</h2><p class="sub">Select 2 or more PDFs — they'll be joined in order.</p>
@@ -516,10 +649,24 @@ window.addEventListener('error', function (e) {
         var b = document.getElementById('jsErr'); if (b) b.style.display = 'block';
     }
 });
-if (!window.PDFLib || !window.pdfjsLib || !window.JSZip || !window.Tesseract) {
+if (!window.PDFLib || !window.pdfjsLib || !window.JSZip) {
     var _le = document.getElementById('libErr'); if (_le) _le.style.display = 'block';
 }
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+window.addEventListener('load', function () {
+    if (!window.PDFLib || !window.pdfjsLib || !window.JSZip) {
+        var _le2 = document.getElementById('libErr'); if (_le2) _le2.style.display = 'block';
+    }
+});
+try { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch (e) {}
+
+/* ============ SHARED UX ============ */
+const MAX_FILE = 100 * 1024 * 1024;
+function toast(t) { const w = document.getElementById('toasts'); if (!w) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; w.appendChild(d); setTimeout(() => d.remove(), 3200); }
+function validPdf(f) {
+    if (!f) return false;
+    if (f.size > MAX_FILE) { toast('File too large — please use files under 100 MB.'); return false; }
+    return true;
+}
 
 /* ============ MODAL SYSTEM ============ */
 const OUT_NAMES = {
@@ -527,12 +674,33 @@ const OUT_NAMES = {
     'delete-pages': 'apexpdf-pages-deleted.pdf', 'extract': 'apexpdf-extracted.pdf',
     'reorder': 'apexpdf-reordered.pdf', 'watermark': 'apexpdf-watermarked.pdf'
 };
-function openModal(id) { document.getElementById('m-' + id).classList.add('open'); }
-function openModalById(fullId) { const m = document.getElementById(fullId); if (m) m.classList.add('open'); }
+const VALID_TOOLS = ['edit','compress','ocr','convert','img2pdf','extract','pagenum','merge','split','organize','rotate','watermark'];
+function openModal(id) {
+    if (!VALID_TOOLS.includes(id)) return;
+    document.getElementById('m-' + id).classList.add('open');
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    const m = document.getElementById('m-' + id);
+    const f = m && m.querySelector('button:not(.mx), input, select');
+    if (f) setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (e) {} }, 60);
+}
+function openModalById(fullId) { const m = document.getElementById(fullId); if (m) { m.classList.add('open'); const f = m.querySelector('button:not(.mx), input, select'); if (f) setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (e) {} }, 60); } }
+function closeModals() { document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); try { history.replaceState(null, '', location.pathname); } catch (e) {} }
 document.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => openModal(t.dataset.open)));
 document.querySelectorAll('[data-modal-link]').forEach(b => b.addEventListener('click', () => openModal(b.dataset.modalLink)));
-document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.classList.remove('open'); }));
-addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')); });
+document.querySelectorAll('.modal').forEach(m => {
+    m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) { m.classList.remove('open'); try { history.replaceState(null, '', location.pathname); } catch (er) {} } });
+});
+addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModals();
+    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); const s = document.getElementById('toolSearch'); if (s) s.focus(); }
+});
+/* mobile menu */
+(function () { const b = document.getElementById('menuBtn'), l = document.getElementById('navLinks'); if (!b || !l) return; b.onclick = () => { const o = l.classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); }; l.querySelectorAll('a').forEach(a => a.addEventListener('click', () => l.classList.remove('open'))); })();
+/* tool search */
+(function () { const s = document.getElementById('toolSearch'); if (!s) return; s.addEventListener('input', () => { const q = s.value.trim().toLowerCase(); document.querySelectorAll('.tile').forEach(t => { const h = (t.textContent + ' ' + (t.dataset.keys || '')).toLowerCase(); t.style.display = !q || h.includes(q) ? '' : 'none'; }); }); })();
+/* deep link: apexpdf.github.io/#edit */
+(function () { const h = (location.hash || '').replace('#', ''); if (VALID_TOOLS.includes(h)) setTimeout(() => openModal(h), 300); })();
 
 async function apiErrorInto(msgEl, resp) {
     let data = null;
@@ -627,6 +795,38 @@ async function engineWatermark(file, text, opacity) {
         });
     });
     return d.save();
+}
+async function engineCompress(file, onProg) {
+    const src = await _loadPdf(await file.arrayBuffer());
+    const out = await PDFLib.PDFDocument.create();
+    const idx = src.getPageIndices();
+    for (let i = 0; i < idx.length; i++) {
+        const [pg] = await out.copyPages(src, [idx[i]]);
+        out.addPage(pg);
+        if (onProg) onProg((i + 1) / idx.length);
+    }
+    out.setTitle(''); out.setAuthor(''); out.setProducer('APEXPDF'); out.setCreator('APEXPDF');
+    return out.save({ useObjectStreams: true, addDefaultPage: false });
+}
+async function enginePageNumbers(file, pos, style, startAt) {
+    const d = await _loadPdf(await file.arrayBuffer());
+    const font = await d.embedFont(PDFLib.StandardFonts.Helvetica);
+    const pages = d.getPages();
+    let n0 = parseInt(startAt, 10); if (!Number.isFinite(n0) || n0 < 1) n0 = 1;
+    pages.forEach((page, i) => {
+        const { width, height } = page.getSize();
+        const n = n0 + i;
+        const label = style === 'n-total' ? n + ' / ' + pages.length : style === 'page-n' ? 'Page ' + n : String(n);
+        const size = 10;
+        const tw = font.widthOfTextAtSize(label, size);
+        let x = width / 2 - tw / 2, y = 28;
+        if (pos === 'bottom-right') { x = width - tw - 36; y = 28; }
+        else if (pos === 'bottom-left') { x = 36; y = 28; }
+        else if (pos === 'top-center') { x = width / 2 - tw / 2; y = height - 34; }
+        else if (pos === 'top-right') { x = width - tw - 36; y = height - 34; }
+        page.drawText(label, { x, y, size, font, color: PDFLib.rgb(0.28, 0.32, 0.42) });
+    });
+    return d.save({ useObjectStreams: true });
 }
 async function engineEdit(fd) {
     const file = fd.get('file');
@@ -736,9 +936,126 @@ async function runTool(endpoint, fd, outName, btn, msgEl) {
     try {
         dl(await buildOutput(endpoint, fd), outName);
         msgEl.textContent = 'Done! Download started.'; msgEl.className = 'msg ok';
+        toast('Done — download started.');
     } catch (err) { msgEl.textContent = err.message; msgEl.className = 'msg err'; }
     finally { btn.disabled = false; }
 }
+
+/* wire dropzones for custom modals (compress / pagenum / extract) */
+function wireDz(modalId) {
+    const modal = document.getElementById('m-' + modalId);
+    if (!modal) return;
+    const input = modal.querySelector('input[type=file]');
+    const dz = modal.querySelector('.dz');
+    const fname = modal.querySelector('.fname');
+    const msg = modal.querySelector('.msg');
+    const set = files => {
+        if (!files || !files.length) return;
+        if ([...files].some(f => f.size > MAX_FILE)) { toast('File too large — max 100 MB.'); if (msg) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; } return; }
+        input.files = files;
+        const names = [...files].map(f => f.name).join(', ');
+        fname.textContent = names.length > 90 ? names.slice(0, 87) + '…' : names;
+        if (msg) { msg.textContent = ''; msg.className = 'msg'; }
+    };
+    dz.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => set(input.files));
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); set(e.dataTransfer.files); });
+}
+['compress', 'pagenum', 'extract'].forEach(wireDz);
+
+/* compress handler */
+(function () {
+    const modal = document.getElementById('m-compress');
+    const input = modal.querySelector('input[type=file]');
+    const msg = modal.querySelector('.msg');
+    const bar = modal.querySelector('#cpProg');
+    const fill = bar ? bar.querySelector('i') : null;
+    document.getElementById('cpGo').onclick = async function () {
+        if (!input.files.length) { msg.textContent = 'Choose a PDF first.'; msg.className = 'msg err'; return; }
+        const f = input.files[0];
+        if (!validPdf(f)) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; return; }
+        this.disabled = true;
+        msg.textContent = 'Compressing…'; msg.className = 'msg busy';
+        if (bar) { bar.classList.add('show'); if (fill) fill.style.width = '5%'; }
+        try {
+            const orig = f.size;
+            const bytes = await engineCompress(f, p => { if (fill) fill.style.width = Math.round(p * 100) + '%'; });
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const saved = Math.max(0, Math.round((1 - blob.size / orig) * 100));
+            dl(blob, f.name.replace(/\.pdf$/i, '') + '-compressed.pdf');
+            msg.textContent = 'Done! ' + saved + '% smaller — download started.'; msg.className = 'msg ok';
+            toast('Compressed ' + saved + '% smaller.');
+        } catch (err) { msg.textContent = err.message; msg.className = 'msg err'; }
+        finally { this.disabled = false; if (bar) setTimeout(() => bar.classList.remove('show'), 1200); }
+    };
+})();
+
+/* page numbers handler */
+(function () {
+    const modal = document.getElementById('m-pagenum');
+    const input = modal.querySelector('input[type=file]');
+    const msg = modal.querySelector('.msg');
+    document.getElementById('pnGo').onclick = async function () {
+        if (!input.files.length) { msg.textContent = 'Choose a PDF first.'; msg.className = 'msg err'; return; }
+        const f = input.files[0];
+        if (!validPdf(f)) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; return; }
+        this.disabled = true;
+        msg.textContent = 'Adding numbers…'; msg.className = 'msg busy';
+        try {
+            const bytes = await enginePageNumbers(f, document.getElementById('pnPos').value, document.getElementById('pnStyle').value, document.getElementById('pnStart').value);
+            dl(new Blob([bytes], { type: 'application/pdf' }), f.name.replace(/\.pdf$/i, '') + '-numbered.pdf');
+            msg.textContent = 'Done! Download started.'; msg.className = 'msg ok';
+            toast('Page numbers added.');
+        } catch (err) { msg.textContent = err.message; msg.className = 'msg err'; }
+        finally { this.disabled = false; }
+    };
+})();
+
+/* extract images handler */
+(function () {
+    const modal = document.getElementById('m-extract');
+    const input = modal.querySelector('input[type=file]');
+    const msg = modal.querySelector('.msg');
+    const bar = modal.querySelector('#exProg');
+    const fill = bar ? bar.querySelector('i') : null;
+    document.getElementById('exGo').onclick = async function () {
+        if (!input.files.length) { msg.textContent = 'Choose a PDF first.'; msg.className = 'msg err'; return; }
+        const f = input.files[0];
+        if (!validPdf(f)) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; return; }
+        const fmt = document.getElementById('exFormat').value;
+        const rangeStr = document.getElementById('exPages').value;
+        this.disabled = true;
+        if (bar) bar.classList.add('show');
+        const say = (t, frac) => { msg.textContent = t; msg.className = 'msg busy'; if (fill && frac != null) fill.style.width = Math.round(frac * 100) + '%'; };
+        try {
+            const doc = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+            const todo = rangeStr.trim() ? parseRangeStr(rangeStr, doc.numPages) : Array.from({ length: doc.numPages }, (_, i) => i + 1);
+            if (!todo.length) throw new Error('No valid pages in range.');
+            const base = f.name.replace(/\.pdf$/i, '');
+            const mime = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+            const blobs = [];
+            for (let k = 0; k < todo.length; k++) {
+                const pn = todo[k];
+                say('Rendering page ' + pn + '/' + doc.numPages + '…', k / todo.length);
+                const page = await doc.getPage(pn);
+                const vp1 = page.getViewport({ scale: 1 });
+                const vp = page.getViewport({ scale: Math.min(3, 2000 / vp1.width) });
+                const c = document.createElement('canvas');
+                c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+                await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+                blobs.push({ pn, blob: await new Promise(r => c.toBlob(r, mime, 0.92)) });
+            }
+            say('Packaging…', 1);
+            if (blobs.length === 1) dl(blobs[0].blob, base + '-page-' + blobs[0].pn + '.' + fmt);
+            else { const zip = new JSZip(); blobs.forEach(b => zip.file(base + '-page-' + b.pn + '.' + fmt, b.blob)); dl(await zip.generateAsync({ type: 'blob' }), base + '-images.zip'); }
+            msg.textContent = 'Done! Download started.'; msg.className = 'msg ok';
+            toast('Images extracted.');
+        } catch (err) { msg.textContent = err.message; msg.className = 'msg err'; }
+        finally { this.disabled = false; if (bar) setTimeout(() => bar.classList.remove('show'), 1200); }
+    };
+})();
 
 /* wire simple tools: each .box has dz/input/fname/[data-run] */
 document.querySelectorAll('.modal').forEach(modal => {
@@ -752,6 +1069,7 @@ document.querySelectorAll('.modal').forEach(modal => {
 
     function setFiles(files) {
         if (!files || !files.length) return;
+        if ([...files].some(f => f.size > MAX_FILE)) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; return; }
         input.files = files;
         const names = [...files].map(f => f.name).join(', ');
         fname.textContent = names.length > 80 ? names.slice(0, 77) + '…' : names;
@@ -783,7 +1101,7 @@ document.querySelectorAll('.modal').forEach(modal => {
     const fname = modal.querySelector('.fname');
     const msg = modal.querySelector('.msg');
     const spec = document.getElementById('orgSpec');
-    function setFiles(files) { if (files && files.length) { input.files = files; fname.textContent = files[0].name; msg.textContent = ''; msg.className = 'msg'; } }
+    function setFiles(files) { if (files && files.length) { if (files[0].size > MAX_FILE) { msg.textContent = 'File too large — max 100 MB.'; msg.className = 'msg err'; return; } input.files = files; fname.textContent = files[0].name; msg.textContent = ''; msg.className = 'msg'; } }
     dz.addEventListener('click', () => input.click());
     input.addEventListener('change', () => setFiles(input.files));
     dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
@@ -818,27 +1136,33 @@ function loadIntoModal(modalId, file) {
     openModal(modalId);
 }
 const ACTIONS = [
-    ['edit', '✏️ Edit'], ['ocr', '🔍 Extract text'], ['split', '✂️ Split'],
+    ['edit', '✏️ Edit'], ['compress', '🗜️ Compress'], ['ocr', '🔍 Extract text'], ['split', '✂️ Split'],
     ['rotate', '🔄 Rotate'], ['watermark', '💧 Watermark'], ['merge', '➕ Add to merge']
 ];
 ACTIONS.forEach(([id, label]) => {
-    const b = document.createElement('button'); b.className = 'qa-btn'; b.textContent = label;
-    b.onclick = () => { if (id === 'merge') loadIntoModal('merge', heroPdfFile); else loadIntoModal(id, heroPdfFile); };
+    const b = document.createElement('button'); b.className = 'qa-btn'; b.type = 'button'; b.textContent = label;
+    b.onclick = () => { if (heroPdfFile) loadIntoModal(id, heroPdfFile); };
     qa.appendChild(b);
 });
+function heroSet(file) {
+    if (!file) return;
+    if (file.size > MAX_FILE) { toast('File too large — max 100 MB.'); return; }
+    heroPdfFile = file;
+    heroFile.textContent = '✓ ' + file.name;
+    qa.classList.add('show');
+    toast('PDF loaded — pick an action below.');
+}
 heroDrop.addEventListener('click', e => { if (!e.target.closest('.qa-btn')) heroInput.click(); });
+heroDrop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); heroInput.click(); } });
 heroInput.addEventListener('change', () => {
     if (!heroInput.files.length) return;
-    heroPdfFile = heroInput.files[0];
-    heroFile.textContent = '✓ ' + heroPdfFile.name;
-    qa.classList.add('show');
+    heroSet(heroInput.files[0]);
 });
 ['dragover', 'dragleave', 'drop'].forEach(ev => heroDrop.addEventListener(ev, e => {
     e.preventDefault();
     heroDrop.classList.toggle('dragover', ev === 'dragover');
     if (ev === 'drop' && e.dataTransfer.files.length) {
-        heroInput.files = e.dataTransfer.files;
-        heroInput.dispatchEvent(new Event('change'));
+        heroSet(e.dataTransfer.files[0]);
     }
 }));
 
@@ -1343,7 +1667,7 @@ canvas.addEventListener('click', e => {
         startNewText(x, y);
     } else if (edState.mode === 'image') {
         const imf = document.getElementById('edImage').files[0];
-        if (!imf) { alert('Choose an image first, then click where it should go.'); return; }
+        if (!imf) { edMsg.textContent = 'Choose an image first, then click where it should go.'; edMsg.className = 'msg err'; toast('Choose an image first.'); return; }
         bakeNow({ type: 'image', page: edState.page, x, y,
             w: parseFloat(document.getElementById('edWidth').value), imageRef: 'img0' },
             [{ key: 'img0', file: imf }]);
@@ -1525,6 +1849,8 @@ ocrModal.querySelector('.dz').addEventListener('click', () => ocrInput.click());
 
 document.getElementById('runOcrBtn').onclick = async function () {
     if (!ocrInput.files.length) { ocrMsg.textContent = 'Choose a PDF or image(s) first.'; ocrMsg.className = 'msg err'; return; }
+    if (!window.Tesseract) { ocrMsg.textContent = 'OCR engine failed to load — check connection and reload.'; ocrMsg.className = 'msg err'; return; }
+    if ([...ocrInput.files].some(f => f.size > MAX_FILE)) { ocrMsg.textContent = 'File too large — max 100 MB.'; ocrMsg.className = 'msg err'; return; }
     const btn = this;
     btn.disabled = true;
     const say = t => { ocrMsg.textContent = t; ocrMsg.className = 'msg busy'; };
@@ -1569,8 +1895,9 @@ document.getElementById('runOcrBtn').onclick = async function () {
         ocrResult.value = dataPages.map(p => (dataPages.length > 1 ? '--- Page ' + p.page + ' ---\n' : '') + p.text).join('\n\n').trim() || '(no text found)';
         ocrResult.style.display = 'block';
         document.getElementById('ocrActions').style.display = 'flex';
-        ocrMsg.textContent = 'Done! ' + data.pages.length + ' page(s) recognized (' + data.lang + ').';
+        ocrMsg.textContent = 'Done! ' + dataPages.length + ' page(s) recognized (' + document.getElementById('ocrLang').value + ').';
         ocrMsg.className = 'msg ok';
+        toast('OCR complete.');
     } catch (err) { ocrMsg.textContent = err.message; ocrMsg.className = 'msg err'; }
     finally { btn.disabled = false; }
 };
@@ -1587,6 +1914,7 @@ document.getElementById('dlOcrBtn').onclick = () => {
 };
 
 document.getElementById('yr').textContent = new Date().getFullYear();
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
 
 /* ---- 3D tilt on tool cards (desktop, motion-safe only) ---- */
 (function () {
