@@ -47,11 +47,12 @@
 html { scroll-behavior: smooth; }
 body { font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-size: 16px; line-height: 1.5; overflow-x: hidden; }
 body::before { content: ''; position: fixed; inset: 0; z-index: -2; background: radial-gradient(1100px 520px at 50% -8%, rgba(79,70,229,.3), transparent 62%), radial-gradient(900px 480px at 88% 22%, rgba(34,211,238,.14), transparent 60%), radial-gradient(800px 520px at 8% 30%, rgba(255,42,109,.1), transparent 60%), linear-gradient(180deg, #070b1a 0%, #04060d 60%); }
-/* cyberpunk CRT scanlines + vignette over everything (non-interactive) */
-body::after { content: ''; position: fixed; inset: 0; z-index: 999; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px); mix-blend-mode: overlay; }
+/* subtle static CRT scanlines (no blend mode — blend forces full-screen recomposite) */
+body::after { content: ''; position: fixed; inset: 0; z-index: 999; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 4px); }
 #bg3d { position: fixed; inset: 0; z-index: -1; opacity: .9; pointer-events: none; }
 .orbs { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.orbs i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; animation: drift 14s ease-in-out infinite alternate; }
+.orbs i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; }
+/* NOTE: orbs are static on purpose — animating huge blurred layers repaints every frame */
 .orbs i:nth-child(1) { width: 420px; height: 420px; left: -120px; top: 8%; background: rgba(79,70,229,.35); }
 .orbs i:nth-child(2) { width: 360px; height: 360px; right: -100px; top: 32%; background: rgba(34,211,238,.22); animation-delay: -4s; }
 .orbs i:nth-child(3) { width: 300px; height: 300px; left: 30%; bottom: -120px; background: rgba(217,70,239,.2); animation-delay: -8s; }
@@ -123,7 +124,7 @@ nav { position: sticky; top: 0; z-index: 50; background: rgba(4,6,13,.74); backd
 .section-sub { color: var(--ink2); font-size: 1rem; margin-top: 10px; }
 
 .tools { max-width: 1160px; margin: 0 auto; padding: 0 24px 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(252px, 1fr)); gap: 18px; perspective: 1400px; }
-.tile { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 24px; cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease; text-align: left; font-family: inherit; overflow: hidden; color: var(--ink); backdrop-filter: blur(18px); }
+.tile { position: relative; background: #0b1122; border: 1px solid var(--line); border-radius: 18px; padding: 24px; cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease; text-align: left; font-family: inherit; overflow: hidden; color: var(--ink); }
 .tile::after { content: ''; position: absolute; inset: auto 0 0 0; height: 2px; background: linear-gradient(90deg, #22d3ee, #818cf8, #e879f9); opacity: 0; transition: opacity .16s; box-shadow: 0 0 16px rgba(34,211,238,.8); }
 .tile:hover { border-color: rgba(34,211,238,.55); box-shadow: var(--neon); transform: translateY(-2px); }
 .tile:hover::after { opacity: 1; }
@@ -142,7 +143,6 @@ nav { position: sticky; top: 0; z-index: 50; background: rgba(4,6,13,.74); backd
 .tile > * { position: relative; z-index: 2; }
 .go:active { transform: translateY(2px) scale(.985); }
 .qa-btn:active, .modebtn:active, .ghost:active { transform: translateY(1px); }
-.go, .qa-btn, .modebtn, .ghost { will-change: transform; }
 @keyframes floatY { 0%,100% { transform: translateY(0) rotateX(6deg) rotateY(-10deg); } 50% { transform: translateY(-18px) rotateX(6deg) rotateY(-6deg); } }
 @keyframes holoSpin { 0%,100% { transform: rotateX(8deg) rotateY(-14deg); } 50% { transform: rotateX(8deg) rotateY(-4deg); } }
 @keyframes scanline { 0% { top: 6%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
@@ -335,6 +335,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .tile .badge { background: rgba(34,211,238,.15); border: 1px solid rgba(34,211,238,.4); color: var(--acc); }
 .tile .badge.pop { background: linear-gradient(92deg,#06b6d4,#818cf8,#c026d3); color: #fff; border: none; box-shadow: 0 0 14px rgba(34,211,238,.5); }
 .menu-btn { color: var(--ink); background: var(--panel); }
+/* below-fold sections skip rendering until scrolled near (big initial-paint win) */
+.tools, .how, .feats, .faq-wrap, .cta-wrap { content-visibility: auto; contain-intrinsic-size: auto 600px; }
 /* ---------- CYBERPUNK ADD-ONS ---------- */
 /* scrolling ticker tape */
 .ticker { overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(4,6,13,.7); backdrop-filter: blur(8px); }
@@ -2073,24 +2075,27 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navi
         let W, H, stars = [];
         function size() {
             W = cv.width = innerWidth; H = cv.height = innerHeight;
-            stars = Array.from({ length: Math.min(160, Math.floor(W * H / 12000)) }, () => ({
+            /* fewer stars, no glow: shadowBlur is the main frame cost */
+            stars = Array.from({ length: Math.min(90, Math.floor(W * H / 22000)) }, () => ({
                 x: Math.random() * W, y: Math.random() * H,
-                z: .3 + Math.random() * .9, r: Math.random() * 1.6 + .3,
+                z: .3 + Math.random() * .9, s: Math.random() < .85 ? 2 : 3,
                 tw: Math.random() * Math.PI * 2
             }));
         }
         size(); addEventListener('resize', size);
+        let last = 0;
         (function tick(t) {
+            requestAnimationFrame(tick);
+            if (t - last < 66) return; // ~15fps is plenty for drifting dust
+            last = t;
+            if (document.hidden) return;
             ctx.clearRect(0, 0, W, H);
             for (const s of stars) {
-                s.y -= s.z * .25; if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; }
-                const a = .25 + .55 * Math.abs(Math.sin(t / 900 + s.tw));
-                ctx.beginPath();
-                ctx.fillStyle = s.z > 1 ? 'rgba(103,232,249,' + a + ')' : 'rgba(165,180,252,' + (a * .8) + ')';
-                ctx.shadowColor = 'rgba(34,211,238,.8)'; ctx.shadowBlur = 8 * s.z;
-                ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+                s.y -= s.z * .5; if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; }
+                const a = .2 + .5 * Math.abs(Math.sin(t / 900 + s.tw));
+                ctx.fillStyle = s.z > 1 ? 'rgba(103,232,249,' + a.toFixed(2) + ')' : 'rgba(165,180,252,' + (a * .8).toFixed(2) + ')';
+                ctx.fillRect(s.x, s.y, s.s, s.s);
             }
-            requestAnimationFrame(tick);
         })(0);
     }
     /* hero hologram follows the mouse */
