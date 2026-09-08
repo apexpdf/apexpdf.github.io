@@ -243,6 +243,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 .ed-strip .ghost:hover { color: #fff; border-color: #4c5b7a; }
 .fmt.on { background: linear-gradient(92deg,#06b6d4,#818cf8) !important; border-color: transparent !important; color: #fff !important; box-shadow: 0 0 12px rgba(34,211,238,.5); }
 .ed-strip input[type=text], .ed-strip select { background: #0f141d; border-color: #35415a; color: #e5ecf5; }
+#repText { flex: 1; min-width: 200px; min-height: 64px; background: #0f141d; border: 1px solid #35415a; color: #e5ecf5; border-radius: 10px; padding: 10px 13px; font-size: .9rem; font-family: inherit; line-height: 1.5; resize: vertical; }
+#repText:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
 .ed-main { flex: 1; display: flex; min-height: 0; }
 .ed-side { width: 148px; flex: none; overflow-y: auto; background: #121826; border-right: 1px solid #2a3547; padding: 14px 10px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .ed-side::-webkit-scrollbar { width: 8px; } .ed-side::-webkit-scrollbar-thumb { background: #2a3547; border-radius: 8px; }
@@ -532,7 +534,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     </div>
     <div class="ed-strip">
         <div class="row" id="repOpts" style="display:none;">
-            <span style="color:#9fb0c8;font-size:.82rem;">Editing on the page — press <b>Enter</b> or click outside to save · Esc cancels</span>
+            <span style="color:#9fb0c8;font-size:.82rem;">Click a line on the page — edit it in the box below, then <b>Apply</b> · Esc cancels</span>
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
@@ -542,6 +544,11 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
             <button type="button" class="ghost" id="repErase" title="Delete this entire line">Erase line</button>
+        </div>
+        <div class="row" id="repPanel" style="display:none;">
+            <textarea id="repText" rows="2" placeholder="Replacement text…" aria-label="Replacement text"></textarea>
+            <button type="button" class="go" id="repApply" style="width:auto;margin-top:0;padding:10px 22px;">Apply replacement</button>
+            <button type="button" class="ghost" id="repCancel">Cancel</button>
         </div>
         <div class="row" id="textOpts" style="display:none;">
             <span style="color:#9fb0c8;font-size:.82rem;">Click the page where text should start — type directly on it · Enter/click-away saves · Esc cancels</span>
@@ -1567,7 +1574,7 @@ document.getElementById('zFit').onclick = () => setZoom(1);
 async function loadTextLayer(pageProxy, vp) {
     holder.querySelectorAll('.tl').forEach(n => n.remove());
     holder.classList.toggle('mode-replace', edState.mode === 'replace');
-    edState.textItems = []; edState.selItem = null; syncRepOpts(false);
+    edState.textItems = []; edState.selItem = null; showRepPanel(false);
     try {
         const tc = await pageProxy.getTextContent();
         const styles = tc.styles || {};
@@ -1637,18 +1644,8 @@ async function loadTextLayer(pageProxy, vp) {
             item.el.style.width = (item.w * 100) + '%';
             item.el.style.height = (item.h * 1.15 * 100) + '%';
             item.el.title = item.text;
-            item.el.addEventListener('click', ev => { ev.stopPropagation(); startInlineEdit(item); });
-            item.el.addEventListener('dblclick', ev => { ev.stopPropagation(); startInlineEdit(item); });
-            item.el.addEventListener('blur', (ev) => {
-                // Toolbar interaction (font/color/size controls) must not commit the edit
-                const rt = ev.relatedTarget;
-                if (rt && rt.closest && rt.closest('.ed-strip')) return;
-                commitInlineEdit();
-            });
-            item.el.addEventListener('keydown', ev => {
-                if (ev.key === 'Enter') { ev.preventDefault(); item.el.blur(); }
-                else if (ev.key === 'Escape') { item.el.dataset.cancel = '1'; item.el.blur(); }
-            });
+            item.el.addEventListener('click', ev => { ev.stopPropagation(); selectLine(item); });
+            item.el.addEventListener('dblclick', ev => { ev.stopPropagation(); selectLine(item); });
             holder.appendChild(item.el);
             edState.textItems.push(item);
         }
@@ -1727,76 +1724,72 @@ function commitNewText(el, xFrac, yFrac, sizePt) {
         bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder')
     });
 }
-function startInlineEdit(item) {
+function selectLine(item) {
     try {
     if (!item || !item.el || !item.el.isConnected) return;
-    // Switching lines: if the old line has unsaved changes, save it first
-    // (rebuilds the page — click the new line again after the instant save).
-    // Otherwise commit quietly with no rebuild, so the new box opens live.
-    if (edState.selItem && edState.selItem !== item) {
-        const old = edState.selItem, oldEl = old && old.el;
-        const dirty = oldEl && oldEl.isContentEditable && !oldEl.dataset.cancel &&
-            oldEl.textContent.replace(/ /g, ' ').trim() !== old.text.trim();
-        if (dirty) { commitInlineEdit(false); return; }
-        commitInlineEdit(true);
+    // Block switching while another line has unapplied changes in the panel
+    if (edState.selItem && edState.selItem !== item && repPanelDirty()) {
+        toast('Apply or Cancel first.');
+        return;
     }
-    if (edState.editingEl) return;
+    if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
     edState.selItem = item;
     const el = item.el;
-    el.classList.add('sel', 'editing');
-    el.contentEditable = 'true';
-    el.setAttribute('spellcheck', 'false');
-    // Pre-fill with the original line so the replacement box is never empty
-    if (!el.textContent.trim()) el.textContent = item.text;
-    el._col = sampleTextColor(item);
-    try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(el._col) ? el._col : '#111111'; } catch (e) {}
+    el.classList.add('sel');
+    item._col = sampleTextColor(item);
+    try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(item._col) ? item._col : '#111111'; } catch (e) {}
     setFmt('repBold', item.bold); setFmt('repItalic', item.italic); setFmt('repUnder', false);
     try { document.getElementById('repFont').value = item.family || 'sans'; } catch (e) {}
-    const cssScale = parseFloat(canvas.style.width) / edState.pageWpt;
-    el.style.background = '#fff';
-    el.style.fontFamily = PREVIEW_FONT[item.family] || PREVIEW_FONT.sans;
-    el.style.fontWeight = item.bold ? '700' : '400';
-    el.style.fontStyle = item.italic ? 'italic' : 'normal';
-    el.style.fontSize = (item.sizePt * cssScale * .92).toFixed(1) + 'px';
-    el.style.lineHeight = '1.15';
     repSizeAdj = null;
     document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
-    refreshEditingStyle();
-    el.focus();
-    const range = document.createRange(); range.selectNodeContents(el); range.collapse(false);
-    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-    syncRepOpts(true);
+    const ta = document.getElementById('repText');
+    ta.value = item.text;
+    showRepPanel(true);
+    ta.focus(); ta.select();
     } catch (err) {
-        edMsg.textContent = 'Could not start editing: ' + err.message; edMsg.className = 'msg err';
+        edMsg.textContent = 'Could not load line: ' + err.message; edMsg.className = 'msg err';
     }
 }
-function commitInlineEdit(silent) {
-    const it = edState.selItem, el = it && it.el;
-    if (!it || !el) return;
-    if (!el.isContentEditable) { el.classList.remove('sel'); edState.selItem = null; return; }
-    const cancelled = el.dataset.cancel === '1';
-    const newText = el.textContent.replace(/\u00a0/g, ' ').trim();
-    const col = el._col || '#111111';
-    const usedSize = repSizeAdj || it.sizePt;
-    el.contentEditable = 'false';
-    el.dataset.cancel = '';
-    el.classList.remove('sel', 'editing');
-    el.removeAttribute('style');
-    resetTlStyle(it);
-    syncRepOpts(false);
+/* ---- replacement panel helpers ---- */
+function repPanelDirty() {
+    const it = edState.selItem;
+    if (!it) return false;
+    return document.getElementById('repText').value !== it.text;
+}
+function showRepPanel(show) {
+    syncRepOpts(show);
+    document.getElementById('repPanel').style.display = show ? 'flex' : 'none';
+}
+function deselectLine() {
+    const it = edState.selItem;
+    if (it && it.el) it.el.classList.remove('sel');
     edState.selItem = null;
     repSizeAdj = null;
-    // Unchanged text needs no rebuild — the element is already restored above.
-    // (Rebuilding here wiped freshly opened boxes on neighboring lines.)
-    if (cancelled || newText === it.text.trim()) { edState._justCommitted = Date.now(); return; }
+    showRepPanel(false);
+}
+function applyRepLine() {
+    const it = edState.selItem;
+    if (!it) return;
+    const ta = document.getElementById('repText');
+    const newText = ta.value.split(String.fromCharCode(160)).join(' ');
+    const col = it._col || '#111111';
+    const usedSize = repSizeAdj || it.sizePt;
+    const fam = document.getElementById('repFont').value || it.family || 'sans';
+    const b = fmtState('repBold'), i = fmtState('repItalic'), u = fmtState('repUnder');
+    deselectLine();
     edState._justCommitted = Date.now();
-    if (silent) return;
+    if (!newText.trim()) {
+        // Empty replacement = erase the line
+        bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
+        return;
+    }
+    if (newText.trim() === it.text.trim()) { edMsg.textContent = 'No changes.'; edMsg.className = 'msg'; return; }
     bakeNow({
         type: 'replace', page: edState.page,
         x: it.x, y: it.yBase, w: it.w,
-        size: usedSize, family: document.getElementById('repFont').value || it.family || 'sans',
-        text: newText, color: col,
-        bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
+        size: usedSize, family: fam,
+        text: newText.slice(0, 800), color: col,
+        bold: b, italic: i, underline: u,
         _orig: it.text
     });
 }
@@ -1817,6 +1810,7 @@ function sampleTextColor(item) {
 const updatePgLabel = () => pgLabel.textContent = 'Page ' + (edState.page + 1) + ' / ' + edState.pageCount;
 canvas.addEventListener('click', e => {
     if (!edState.doc || edState.mode === 'erase') return;
+    if (edState.mode === 'replace') { if (edState.selItem && !repPanelDirty()) deselectLine(); return; }
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
     if (edState.mode === 'text') {
@@ -1882,26 +1876,24 @@ function setMode(m) {
     document.getElementById('textOpts').style.display = m === 'text' ? 'flex' : 'none';
     document.getElementById('imageOpts').style.display = m === 'image' ? 'flex' : 'none';
     document.getElementById('eraseOpts').style.display = m === 'erase' ? 'flex' : 'none';
-    syncRepOpts(m === 'replace' && edState.selItem);
+    if (m !== 'replace') deselectLine();
+    else showRepPanel(!!edState.selItem);
     holder.classList.toggle('mode-replace', m === 'replace');
     holder.classList.toggle('mode-erase', m === 'erase');
-    if (m !== 'replace' && edState.selItem) { edState.selItem.el.classList.remove('sel'); edState.selItem = null; }
 }
 
 document.getElementById('repErase').onclick = () => {
     const it = edState.selItem;
     if (!it || !it.el) return;
-    const el = it.el;
-    el.contentEditable = 'false';
-    el.dataset.cancel = '';
-    el.classList.remove('sel', 'editing');
-    el.removeAttribute('style');
-    resetTlStyle(it);
-    syncRepOpts(false);
-    edState.selItem = null;
-    repSizeAdj = null;
+    deselectLine();
     bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
 };
+document.getElementById('repApply').onclick = () => applyRepLine();
+document.getElementById('repCancel').onclick = () => deselectLine();
+document.getElementById('repText').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); applyRepLine(); }
+    else if (ev.key === 'Escape') { ev.preventDefault(); deselectLine(); }
+});
 
 /* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
 let repSizeAdj = null;
