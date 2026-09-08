@@ -1638,7 +1638,13 @@ async function loadTextLayer(pageProxy, vp) {
             item.el.style.height = (item.h * 1.15 * 100) + '%';
             item.el.title = item.text;
             item.el.addEventListener('click', ev => { ev.stopPropagation(); startInlineEdit(item); });
-            item.el.addEventListener('blur', () => commitInlineEdit());
+            item.el.addEventListener('dblclick', ev => { ev.stopPropagation(); startInlineEdit(item); });
+            item.el.addEventListener('blur', (ev) => {
+                // Toolbar interaction (font/color/size controls) must not commit the edit
+                const rt = ev.relatedTarget;
+                if (rt && rt.closest && rt.closest('.ed-strip')) return;
+                commitInlineEdit();
+            });
             item.el.addEventListener('keydown', ev => {
                 if (ev.key === 'Enter') { ev.preventDefault(); item.el.blur(); }
                 else if (ev.key === 'Escape') { item.el.dataset.cancel = '1'; item.el.blur(); }
@@ -1722,12 +1728,26 @@ function commitNewText(el, xFrac, yFrac, sizePt) {
     });
 }
 function startInlineEdit(item) {
-    if (edState.selItem && edState.selItem !== item && edState.selItem.el) commitInlineEdit();
+    try {
+    if (!item || !item.el || !item.el.isConnected) return;
+    // Switching lines: if the old line has unsaved changes, save it first
+    // (rebuilds the page — click the new line again after the instant save).
+    // Otherwise commit quietly with no rebuild, so the new box opens live.
+    if (edState.selItem && edState.selItem !== item) {
+        const old = edState.selItem, oldEl = old && old.el;
+        const dirty = oldEl && oldEl.isContentEditable && !oldEl.dataset.cancel &&
+            oldEl.textContent.replace(/ /g, ' ').trim() !== old.text.trim();
+        if (dirty) { commitInlineEdit(false); return; }
+        commitInlineEdit(true);
+    }
     if (edState.editingEl) return;
     edState.selItem = item;
     const el = item.el;
     el.classList.add('sel', 'editing');
     el.contentEditable = 'true';
+    el.setAttribute('spellcheck', 'false');
+    // Pre-fill with the original line so the replacement box is never empty
+    if (!el.textContent.trim()) el.textContent = item.text;
     el._col = sampleTextColor(item);
     try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(el._col) ? el._col : '#111111'; } catch (e) {}
     setFmt('repBold', item.bold); setFmt('repItalic', item.italic); setFmt('repUnder', false);
@@ -1746,11 +1766,14 @@ function startInlineEdit(item) {
     const range = document.createRange(); range.selectNodeContents(el); range.collapse(false);
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     syncRepOpts(true);
+    } catch (err) {
+        edMsg.textContent = 'Could not start editing: ' + err.message; edMsg.className = 'msg err';
+    }
 }
-function commitInlineEdit() {
+function commitInlineEdit(silent) {
     const it = edState.selItem, el = it && it.el;
     if (!it || !el) return;
-    if (!el.isContentEditable) { el.classList.remove('sel'); return; }
+    if (!el.isContentEditable) { el.classList.remove('sel'); edState.selItem = null; return; }
     const cancelled = el.dataset.cancel === '1';
     const newText = el.textContent.replace(/\u00a0/g, ' ').trim();
     const col = el._col || '#111111';
@@ -1763,8 +1786,11 @@ function commitInlineEdit() {
     syncRepOpts(false);
     edState.selItem = null;
     repSizeAdj = null;
+    // Unchanged text needs no rebuild — the element is already restored above.
+    // (Rebuilding here wiped freshly opened boxes on neighboring lines.)
+    if (cancelled || newText === it.text.trim()) { edState._justCommitted = Date.now(); return; }
     edState._justCommitted = Date.now();
-    if (cancelled || newText === it.text.trim()) { renderPage(); return; }
+    if (silent) return;
     bakeNow({
         type: 'replace', page: edState.page,
         x: it.x, y: it.yBase, w: it.w,
@@ -1883,7 +1909,7 @@ const fmtState = id => document.getElementById(id).classList.contains('on');
 ['repBold', 'repItalic', 'repUnder', 'edBold', 'edItalic', 'edUnder'].forEach(id => {
     document.getElementById(id).onclick = function () { this.classList.toggle('on'); refreshEditingStyle(); };
 });
-document.querySelectorAll('#repOpts button').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
+document.querySelectorAll('.ed-strip button').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
 document.getElementById('repColor').addEventListener('input', refreshEditingStyle);
 document.getElementById('repFont').addEventListener('change', refreshEditingStyle);
 document.getElementById('edFont').addEventListener('change', refreshEditingStyle);
