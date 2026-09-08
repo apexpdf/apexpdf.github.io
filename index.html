@@ -457,6 +457,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#e5ecf5;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
+            <select id="repFont" title="Font family (auto-detected)" style="max-width:120px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
             <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -465,6 +466,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         </div>
         <div class="row" id="textOpts" style="display:none;">
             <span style="color:#9fb0c8;font-size:.82rem;">Click the page where text should start — type directly on it · Enter/click-away saves · Esc cancels</span>
+            <select id="edFont" title="Font family" style="max-width:120px;"><option value="sans" selected>Sans</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
             <button type="button" class="ghost fmt" id="edBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="edItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="edUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -841,11 +843,24 @@ async function engineEdit(fd) {
     for (const key of fd.keys()) if (/^img\d+$/.test(key)) imgMap[key] = fd.get(key);
     const doc = await _loadPdf(await file.arrayBuffer());
     const pages = doc.getPages();
-    const fontR = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-    const fontB = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-    const fontI = await doc.embedFont(PDFLib.StandardFonts.HelveticaOblique);
-    const fontBI = await doc.embedFont(PDFLib.StandardFonts.HelveticaBoldOblique);
-    const pickFont = e => e.bold && e.italic ? fontBI : e.bold ? fontB : e.italic ? fontI : fontR;
+    const SF = PDFLib.StandardFonts;
+    const F = {};
+    F['sans'] = {
+        r: await doc.embedFont(SF.Helvetica), b: await doc.embedFont(SF.HelveticaBold),
+        i: await doc.embedFont(SF.HelveticaOblique), bi: await doc.embedFont(SF.HelveticaBoldOblique)
+    };
+    F['serif'] = {
+        r: await doc.embedFont(SF.TimesRoman), b: await doc.embedFont(SF.TimesRomanBold),
+        i: await doc.embedFont(SF.TimesRomanItalic), bi: await doc.embedFont(SF.TimesRomanBoldItalic)
+    };
+    F['mono'] = {
+        r: await doc.embedFont(SF.Courier), b: await doc.embedFont(SF.CourierBold),
+        i: await doc.embedFont(SF.CourierOblique), bi: await doc.embedFont(SF.CourierBoldOblique)
+    };
+    const pickFont = e => {
+        const fam = F[e.family] || F['sans'];
+        return e.bold && e.italic ? fam.bi : e.bold ? fam.b : e.italic ? fam.i : fam.r;
+    };
     const wrapText = (text, f, size, maxW) => {
         const out = [];
         for (const para of String(text).split(/\r?\n/)) {
@@ -1476,19 +1491,33 @@ async function loadTextLayer(pageProxy, vp) {
     edState.textItems = []; edState.selItem = null; syncRepOpts(false);
     try {
         const tc = await pageProxy.getTextContent();
+        const styles = tc.styles || {};
+        const sniffFont = (fontName) => {
+            const st = (fontName && styles[fontName]) || {};
+            const s = String((st.fontFamily || '') + ' ' + (fontName || '')).toLowerCase();
+            let family = 'sans';
+            if (/courier|mono|consolas|menlo|nimbusmono|freemono|liberationmono|typewriter/.test(s)) family = 'mono';
+            else if (/sans/.test(s)) family = 'sans';
+            else if (/serif|times|georgia|garamond|palatino|bookman|book antiqua|minion|cambria|charter|didot|calisto|nimbusroman|liberationserif|freeserif/.test(s)) family = 'serif';
+            const bold = /bold|black|heavy|demibold|semibold|\b700\b|\b800\b|\b900\b/.test(s);
+            const italic = /italic|oblique|cursive/.test(s);
+            return { family, bold, italic };
+        };
         const raw = [];
         for (const it of tc.items) {
             if (!it.str || !it.str.trim() || !it.transform) continue;
             const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
             const fh = Math.hypot(tx[2], tx[3]);
             if (fh < 3) continue;
+            const sn = sniffFont(it.fontName);
             const item = {
                 text: it.str,
                 x: tx[4] / vp.width,                 // baseline start, fraction of width
                 yBase: tx[5] / vp.height,            // baseline, fraction from top
                 w: ((it.width || 0) * vp.scale) / vp.width,
                 h: fh / vp.height,
-                sizePt: fh / vp.scale                // font size in PDF points
+                sizePt: fh / vp.scale,               // font size in PDF points
+                family: sn.family, bold: sn.bold, italic: sn.italic
             };
             if (item.w <= 0.001) continue;
             raw.push(item);
@@ -1510,8 +1539,15 @@ async function loadTextLayer(pageProxy, vp) {
                 L.h = Math.max(L.h, r.h);
                 L.sizePt = Math.max(L.sizePt, r.sizePt);
                 L.yBase = (L.yBase + r.yBase) / 2;
+                (L._fams = L._fams || []).push(r.family);
+                L.bold = L.bold || r.bold; L.italic = L.italic || r.italic;
+                if (L._fams.length >= 2) {
+                    const counts = {};
+                    L._fams.forEach(f => counts[f] = (counts[f] || 0) + 1);
+                    L.family = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+                }
             } else {
-                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt });
+                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt, family: r.family || 'sans', bold: !!r.bold, italic: !!r.italic, _fams: [r.family || 'sans'] });
             }
         }
         for (const item of lines) {
@@ -1537,6 +1573,8 @@ async function loadTextLayer(pageProxy, vp) {
     } catch (e) { /* non-fatal */ }
 }
 function syncRepOpts(show) { document.getElementById('repOpts').style.display = show ? 'flex' : 'none'; }
+function setFmt(id, on) { document.getElementById(id).classList.toggle('on', !!on); }
+const PREVIEW_FONT = { sans: "'Helvetica Neue',Helvetica,Arial,sans-serif", serif: "Georgia,'Times New Roman',Times,serif", mono: "'Courier New',Courier,monospace" };
 function resetTlStyle(item) {
     const el = item.el;
     el.style.left = (item.x * 100) + '%';
@@ -1551,6 +1589,7 @@ function refreshEditingStyle() {
         it.el.style.fontStyle = fmtState('repItalic') ? 'italic' : 'normal';
         it.el.style.textDecoration = fmtState('repUnder') ? 'underline' : 'none';
         it.el.style.color = document.getElementById('repColor').value;
+        it.el.style.fontFamily = PREVIEW_FONT[document.getElementById('repFont').value] || PREVIEW_FONT.sans;
     }
     const nt = holder.querySelector('.tl.newtext');
     if (nt) {
@@ -1558,6 +1597,7 @@ function refreshEditingStyle() {
         nt.style.fontStyle = fmtState('edItalic') ? 'italic' : 'normal';
         nt.style.textDecoration = fmtState('edUnder') ? 'underline' : 'none';
         nt.style.color = document.getElementById('edColor').value;
+        nt.style.fontFamily = PREVIEW_FONT[document.getElementById('edFont').value] || PREVIEW_FONT.sans;
     }
 }
 function startNewText(xFrac, yFrac) {
@@ -1568,7 +1608,7 @@ function startNewText(xFrac, yFrac) {
     el.style.top = (yFrac * 100) + '%';
     el.style.minWidth = '30px';
     el.style.background = '#fff';
-    el.style.fontFamily = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+    el.style.fontFamily = PREVIEW_FONT[document.getElementById('edFont').value] || PREVIEW_FONT.sans;
     el.style.lineHeight = '1.15';
     const sizePt = parseFloat(document.getElementById('edSize').value);
     const cssScale = parseFloat(canvas.style.width) / edState.pageWpt;
@@ -1587,6 +1627,7 @@ function refreshEditingStyleNew(el) {
     el.style.fontWeight = fmtState('edBold') ? '700' : '400';
     el.style.fontStyle = fmtState('edItalic') ? 'italic' : 'normal';
     el.style.textDecoration = fmtState('edUnder') ? 'underline' : 'none';
+    el.style.fontFamily = PREVIEW_FONT[document.getElementById('edFont').value] || PREVIEW_FONT.sans;
 }
 function commitNewText(el, xFrac, yFrac, sizePt) {
     const cancelled = el.dataset.cancel === '1';
@@ -1596,7 +1637,7 @@ function commitNewText(el, xFrac, yFrac, sizePt) {
     if (cancelled || !text) return;
     bakeNow({
         type: 'text', page: edState.page, x: xFrac, y: yFrac, text,
-        size: sizePt,
+        size: sizePt, family: document.getElementById('edFont').value || 'sans',
         color: document.getElementById('edColor').value,
         bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder')
     });
@@ -1609,9 +1650,14 @@ function startInlineEdit(item) {
     el.classList.add('sel', 'editing');
     el.contentEditable = 'true';
     el._col = sampleTextColor(item);
+    try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(el._col) ? el._col : '#111111'; } catch (e) {}
+    setFmt('repBold', item.bold); setFmt('repItalic', item.italic); setFmt('repUnder', false);
+    try { document.getElementById('repFont').value = item.family || 'sans'; } catch (e) {}
     const cssScale = parseFloat(canvas.style.width) / edState.pageWpt;
     el.style.background = '#fff';
-    el.style.fontFamily = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+    el.style.fontFamily = PREVIEW_FONT[item.family] || PREVIEW_FONT.sans;
+    el.style.fontWeight = item.bold ? '700' : '400';
+    el.style.fontStyle = item.italic ? 'italic' : 'normal';
     el.style.fontSize = (item.sizePt * cssScale * .92).toFixed(1) + 'px';
     el.style.lineHeight = '1.15';
     repSizeAdj = null;
@@ -1643,7 +1689,7 @@ function commitInlineEdit() {
     bakeNow({
         type: 'replace', page: edState.page,
         x: it.x, y: it.yBase, w: it.w,
-        size: usedSize,
+        size: usedSize, family: document.getElementById('repFont').value || it.family || 'sans',
         text: newText, color: col,
         bold: fmtState('repBold'), italic: fmtState('repItalic'), underline: fmtState('repUnder'),
         _orig: it.text
@@ -1749,7 +1795,7 @@ document.getElementById('repErase').onclick = () => {
     syncRepOpts(false);
     edState.selItem = null;
     repSizeAdj = null;
-    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, text: '', color: '#111111', _orig: it.text });
+    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
 };
 
 /* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
@@ -1760,6 +1806,9 @@ const fmtState = id => document.getElementById(id).classList.contains('on');
 });
 document.querySelectorAll('#repOpts button').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
 document.getElementById('repColor').addEventListener('input', refreshEditingStyle);
+document.getElementById('repFont').addEventListener('change', refreshEditingStyle);
+document.getElementById('edFont').addEventListener('change', refreshEditingStyle);
+document.getElementById('edColor').addEventListener('input', refreshEditingStyle);
 function stepSize(d) {
     const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
     repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
