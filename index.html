@@ -374,6 +374,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <a href="#faq">FAQ</a>
         <a href="#" onclick="openModalById('m-privacy');return false;">Privacy</a>
         <span id="planBadge" style="display:none;font-size:.72rem;font-weight:800;letter-spacing:.1em;color:#241C10;background:var(--gold);border-radius:999px;padding:4px 11px;">PRO</span>
+        <button id="authBtn" class="ghost" style="padding:8px 14px;font-size:.85rem;">Sign in</button>
         <a href="#" id="proBtn" class="nav-cta" onclick="openModalById('m-pro');return false;">👑 Go Pro</a>
     </div>
     <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
@@ -667,6 +668,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 <div class="modal" id="m-pro"><div class="box">
     <button class="mx" data-close>&times;</button>
     <h2>APEXPDF Pro 👑</h2><p class="sub">Free outputs carry a small “Created with APEXPDF” footer. Pro removes it — clean documents, same private in-browser processing.</p>
+    <p class="sub" style="margin-top:-10px;">Step 1 — sign in with Google (top bar). Step 2 — buy, then activate your key below. Keys only work for the Google account that bought them.</p>
     <div class="row" style="margin-top:0;">
         <button type="button" class="go" id="buyMonthly" style="margin-top:0;">Pro Monthly</button>
         <button type="button" class="ghost" id="buyYearly">Pro Yearly (−20%)</button>
@@ -744,6 +746,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 window.addEventListener('error', function (e) {
     var msg = (e && e.message) || '';
@@ -801,7 +804,7 @@ addEventListener('keydown', e => {
     if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(tag)) { e.preventDefault(); const s = document.getElementById('toolSearch'); if (s) s.focus(); }
 });
 /* mobile menu */
-(function () { const b = document.getElementById('menuBtn'), l = document.getElementById('navLinks'); if (!b || !l) return; b.onclick = () => { const o = l.classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); }; l.querySelectorAll('a').forEach(a => a.addEventListener('click', () => l.classList.remove('open'))); })();
+(function () { const b = document.getElementById('menuBtn'), l = document.getElementById('navLinks'); if (!b || !l) return; b.onclick = () => { const o = l.classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); }; l.querySelectorAll('a,button').forEach(a => a.addEventListener('click', () => l.classList.remove('open'))); })();
 /* tool search */
 (function () { const s = document.getElementById('toolSearch'); if (!s) return; s.addEventListener('input', () => { const q = s.value.trim().toLowerCase(); document.querySelectorAll('.tile').forEach(t => { const h = (t.textContent + ' ' + (t.dataset.keys || '')).toLowerCase(); t.style.display = !q || h.includes(q) ? '' : 'none'; }); }); })();
 /* deep link: apexpdf.github.io/#edit */
@@ -1081,7 +1084,10 @@ function getLicense() {
 }
 function isPro() {
     const l = getLicense();
-    return !!(l && l.plan === 'pro' && l.key);
+    if (!(l && l.plan === 'pro' && l.key)) return false;
+    if (!sbConfigured()) return true; // pre-setup: key alone suffices
+    // Bound to the buyer's Google account — sharing the key alone unlocks nothing
+    return !!(sbUser && l.email && sbUser.email && l.email.toLowerCase() === sbUser.email.toLowerCase());
 }
 function freeStampNeeded() { return !isPro(); }
 /* discreet footer stamp for free-tier PDFs */
@@ -1112,6 +1118,43 @@ function validateLicenseKey(key) {
 // Optional: Lemon Squeezy license API key for server-grade verification.
 // Static hosting cannot keep secrets — wire this through a tiny backend later.
 const LEMON_API_KEY = '';
+/* ---- Google sign-in (Supabase Auth). Paste your project keys to enable. ----
+   Setup: supabase.com → New project (free) → Authentication → Providers →
+   enable Google (needs a Google Cloud OAuth client) → copy URL + anon key. */
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+let sbClient = null, sbUser = null;
+function sbConfigured() { return !!(SUPABASE_URL && SUPABASE_ANON_KEY); }
+function sbInit() {
+    if (!sbClient && sbConfigured() && window.supabase) {
+        sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        sbClient.auth.onAuthStateChange(() => sbRefresh());
+    }
+    return sbClient;
+}
+async function sbRefresh() {
+    const c = sbInit();
+    if (!c) { paintAuth(); return null; }
+    try {
+        const { data } = await c.auth.getSession();
+        sbUser = (data && data.session && data.session.user) || null;
+    } catch (e) { sbUser = null; }
+    paintAuth();
+    paintPlan();
+    return sbUser;
+}
+async function signInGoogle() {
+    if (!sbInit()) { toast('Sign-in is being connected — check back soon.'); return; }
+    await sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0] } });
+}
+async function signOutGoogle() {
+    const c = sbInit();
+    if (c) { try { await c.auth.signOut(); } catch (e) {} }
+    sbUser = null;
+    paintAuth();
+    paintPlan();
+    toast('Signed out — free tier.');
+}
 async function buildOutput(endpoint, fd) {
     const F = k => fd.get(k);
     let bytes;
@@ -2445,6 +2488,21 @@ document.getElementById('dlOcrBtn').onclick = () => {
 document.getElementById('yr').textContent = new Date().getFullYear();
 
 /* ============ PRO / LICENSE ============ */
+function paintAuth() {
+    const b = document.getElementById('authBtn');
+    if (!b) return;
+    if (sbUser && sbUser.email) {
+        const em = sbUser.email;
+        b.innerHTML = '';
+        b.textContent = em.length > 20 ? em.slice(0, 18) + '…' : em;
+        b.title = 'Signed in as ' + em + ' — click to sign out';
+        b.onclick = () => { if (confirm('Sign out of ' + em + '?')) signOutGoogle(); };
+    } else {
+        b.textContent = 'G Sign in';
+        b.title = 'Sign in with Google';
+        b.onclick = () => signInGoogle();
+    }
+}
 function paintPlan() {
     const pro = isPro();
     const badge = document.getElementById('planBadge');
@@ -2459,10 +2517,11 @@ function paintPlan() {
 }
 function proSay(t, cls) { const m = document.getElementById('proMsg'); if (m) { m.textContent = t; m.className = 'msg ' + cls; } }
 document.getElementById('activateBtn').onclick = () => {
+    if (sbConfigured() && !sbUser) { proSay('Sign in with Google first, then activate.', 'busy'); signInGoogle(); return; }
     const v = document.getElementById('licenseKey').value;
     const r = validateLicenseKey(v);
     if (!r.ok) { proSay(r.error, 'err'); return; }
-    try { localStorage.setItem('apex-license', JSON.stringify({ key: v.trim().toUpperCase(), plan: 'pro', at: Date.now() })); } catch (e) {}
+    try { localStorage.setItem('apex-license', JSON.stringify({ key: v.trim().toUpperCase(), plan: 'pro', email: sbUser ? sbUser.email : '', at: Date.now() })); } catch (e) {}
     document.getElementById('licenseKey').value = '';
     proSay('Pro activated — outputs are now watermark-free.', 'ok');
     toast('Pro activated.');
@@ -2481,6 +2540,8 @@ function buyGo(kind) {
 document.getElementById('buyMonthly').onclick = () => buyGo('monthly');
 document.getElementById('buyYearly').onclick = () => buyGo('yearly');
 paintPlan();
+paintAuth();
+sbRefresh();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
 
 /* ---- 3D tilt on tool cards (desktop, motion-safe only) ---- */
