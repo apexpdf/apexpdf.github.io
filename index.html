@@ -2131,25 +2131,24 @@ function twinCandidates(raw) {
     if (twins[base] && twins[base] !== base) out.push(twins[base]);
     return out;
 }
-async function fetchGwfhSet(id) {
-    const url = 'https://gwfh.mranftl.com/api/fonts/' + encodeURIComponent(id) + '?download=zip&subsets=latin&variants=regular,italic,700,700italic&formats=ttf';
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('no pack');
-    const zip = await JSZip.loadAsync(await r.arrayBuffer());
-    const files = Object.keys(zip.files).filter(n => /\.ttf$/i.test(n) && !zip.files[n].dir);
-    if (!files.length) throw new Error('empty pack');
-    const isB = n => /bold|700|black|heavy/i.test(n);
-    const isI = n => /italic|oblique/i.test(n);
-    const fBI = files.find(n => isB(n) && isI(n));
-    const fB = files.find(n => isB(n) && !isI(n));
-    const fI = files.find(n => !isB(n) && isI(n));
-    const fR = files.find(n => !isB(n) && !isI(n)) || files[0];
-    const get = async n => n ? (await zip.files[n].async('arraybuffer')).slice(0) : null;
-    const R = await get(fR);
-    if (!R) throw new Error('empty pack');
+/* bundled metric twins in ./fonts/ — same-origin so no CORS issues,
+   cached by the service worker, works offline after first use */
+const BUNDLED_FONTS = ['arimo', 'tinos', 'cousine', 'gelasio', 'ebgaramond', 'caladea', 'carlito'];
+async function fetchLocalSet(id) {
+    if (!BUNDLED_FONTS.includes(id)) throw new Error('not bundled');
+    const get = async style => {
+        const r = await fetch('fonts/' + id + '-' + style + '.ttf');
+        if (!r.ok) throw new Error('missing file');
+        return (await r.arrayBuffer()).slice(0);
+    };
+    const R = await get('Regular');
     // Validate before accepting
     await (await PDFLib.PDFDocument.create()).embedFont(R.slice(0));
-    return { id, label: id, r: R, b: await get(fB), i: await get(fI), bi: await get(fBI) };
+    let B = null, I = null, BI = null;
+    try { B = await get('Bold'); } catch (e) {}
+    try { I = await get('Italic'); } catch (e) {}
+    try { BI = await get('BoldItalic'); } catch (e) {}
+    return { id, label: id, r: R, b: B, i: I, bi: BI };
 }
 async function autoMatchFont(andApply) {
     const t = edState.selItem;
@@ -2164,7 +2163,7 @@ async function autoMatchFont(andApply) {
         if (!cands.length) throw new Error('unknown font');
         let set = null, lastErr = null;
         for (const id of cands) {
-            try { set = await fetchGwfhSet(id); break; }
+            try { set = await fetchLocalSet(id); break; }
             catch (e) { lastErr = e; }
         }
         if (!set) throw lastErr || new Error('no match');
@@ -2184,7 +2183,7 @@ async function autoMatchFont(andApply) {
         edMsg.className = 'msg ok';
         if (andApply) applyRepLine();
     } catch (err) {
-        edMsg.textContent = 'No free match for ' + (raw || 'this font') + ' — closest built-in kept.';
+        edMsg.textContent = 'No bundled match for ' + (raw || 'this font') + ' yet — tell me the name and I will add it.';
         edMsg.className = 'msg err';
     } finally {
         btn.disabled = false;
