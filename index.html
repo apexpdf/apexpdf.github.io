@@ -21,7 +21,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="favicon.svg">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"APEXPDF","url":"https://apexpdf.github.io/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"},"description":"Free online PDF toolkit: edit, merge, split, compress, OCR, convert, organize, rotate, watermark."}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do my files leave my device?","acceptedAnswer":{"@type":"Answer","text":"No. All processing runs inside your browser with pdf-lib, pdf.js and Tesseract. Files are never uploaded."}},{"@type":"Question","name":"Is APEXPDF free?","acceptedAnswer":{"@type":"Answer","text":"Yes — unlimited free use, no sign-up, no watermarks on output."}},{"@type":"Question","name":"Can I edit existing PDF text?","acceptedAnswer":{"@type":"Answer","text":"Yes. Open Edit PDF, click any text line and retype. Press Enter or click outside to bake the change instantly."}},{"@type":"Question","name":"What is the file size limit?","acceptedAnswer":{"@type":"Answer","text":"Browsers handle up to ~100 MB comfortably. Larger files may be slow on low-memory devices."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Do my files leave my device?","acceptedAnswer":{"@type":"Answer","text":"No. All processing runs inside your browser with pdf-lib, pdf.js and Tesseract. Files are never uploaded."}},{"@type":"Question","name":"Is APEXPDF free?","acceptedAnswer":{"@type":"Answer","text":"Yes — unlimited free use with no sign-up. Free outputs carry a small APEXPDF footer; Pro removes it."}},{"@type":"Question","name":"Can I edit existing PDF text?","acceptedAnswer":{"@type":"Answer","text":"Yes. Open Edit PDF, click any text line and retype. Press Enter or click outside to bake the change instantly."}},{"@type":"Question","name":"What is the file size limit?","acceptedAnswer":{"@type":"Answer","text":"Browsers handle up to ~100 MB comfortably. Larger files may be slow on low-memory devices."}}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6782833833975102" crossorigin="anonymous"></script><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d6bff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='26' font-weight='900' fill='white' text-anchor='middle'%3EAX%3C/text%3E%3C/svg%3E">
 <style>/* ============ APEXPDF ROYAL GOLD THEME ============ */
 :root {
@@ -373,7 +373,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <a href="#how">How it works</a>
         <a href="#faq">FAQ</a>
         <a href="#" onclick="openModalById('m-privacy');return false;">Privacy</a>
-        <a href="#tools" class="nav-cta" onclick="document.getElementById('heroDrop').scrollIntoView({behavior:'smooth',block:'center'});return false;">Start free</a>
+        <span id="planBadge" style="display:none;font-size:.72rem;font-weight:800;letter-spacing:.1em;color:#241C10;background:var(--gold);border-radius:999px;padding:4px 11px;">PRO</span>
+        <a href="#" id="proBtn" class="nav-cta" onclick="openModalById('m-pro');return false;">👑 Go Pro</a>
     </div>
     <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
 </div></nav>
@@ -410,7 +411,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 <div class="section-head">
     <span class="eyebrow">All Tools</span>
     <h2 class="section-title">Everything your PDF needs</h2>
-    <p class="section-sub">Click any tool to begin — no account, no watermarks on output.</p>
+    <p class="section-sub">Click any tool to begin — no account. Free outputs carry a small footer; Pro removes it.</p>
 </div>
 
 <div class="tools-bar"><div class="search-wrap"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="toolSearch" placeholder="Search tools…  ( press / )" aria-label="Search tools"></div></div>
@@ -432,8 +433,8 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
 </div>
 
 <section class="how" id="how"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">How it works</span><h2 class="section-title">Done in 3 steps</h2></div><div class="how-grid"><div class="how-card"><b><span class="how-num">1</span>Drop your file</b><p>Drag a PDF onto the hero dropzone or any tool. It stays on your device — nothing is uploaded, ever.</p></div><div class="how-card"><b><span class="how-num">2</span>Pick a tool</b><p>Edit text on the page, merge, compress, OCR a scan, convert, number pages or stamp a watermark.</p></div><div class="how-card"><b><span class="how-num">3</span>Download</b><p>Processing happens instantly in your browser. Hit Download and you're done — no account, no watermark.</p></div></div></section>
-<section class="feats"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">Why APEXPDF</span><h2 class="section-title">Private by design</h2></div><div class="feat-grid"><div class="feat"><h3>🔒 Files never leave your device</h3><p>Built on pdf-lib, pdf.js and Tesseract running locally. We couldn't see your documents even if we wanted to.</p></div><div class="feat"><h3>⚡ Instant, no queues</h3><p>No uploads, no waiting rooms, no credits. Small files finish in under a second.</p></div><div class="feat"><h3>📱 Works everywhere</h3><p>Any modern browser on desktop or mobile. Installable as an app, works offline after first load.</p></div><div class="feat"><h3>♾️ Unlimited &amp; free</h3><p>No sign-up, no watermarks on output, no daily caps for normal use.</p></div></div></section>
-<section class="faq-wrap" id="faq"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">FAQ</span><h2 class="section-title">Questions, answered</h2></div><div class="faq"><details open><summary>Do my files leave my device?</summary><div class="a">No. Every tool runs 100% client-side in your browser. Your PDFs are processed in memory and never uploaded to any server.</div></details><details><summary>Is it really free?</summary><div class="a">Yes — unlimited free use with no account and no watermarks stamped on your output.</div></details><details><summary>How do I edit existing PDF text?</summary><div class="a">Open Edit PDF, drop your file, then click any text line directly on the page. Retype, press Enter or click outside — the change is baked in instantly. Use Undo if you make a mistake.</div></details><details><summary>What about scanned PDFs?</summary><div class="a">Scans are images, not text. Use OCR Text to recognize the words first (English, Spanish, French, German and more), then copy or download the result.</div></details><details><summary>Is there a file size limit?</summary><div class="a">Browsers comfortably handle files up to ~100 MB. Very large or image-heavy PDFs may be slower on phones — try Compress PDF or split the file first.</div></details><details><summary>Does it work offline?</summary><div class="a">After your first visit the app shell is cached, and all processing is local — so core tools keep working with a flaky connection. CDN libraries need one online load first.</div></details></div></section>
+<section class="feats"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">Why APEXPDF</span><h2 class="section-title">Private by design</h2></div><div class="feat-grid"><div class="feat"><h3>🔒 Files never leave your device</h3><p>Built on pdf-lib, pdf.js and Tesseract running locally. We couldn't see your documents even if we wanted to.</p></div><div class="feat"><h3>⚡ Instant, no queues</h3><p>No uploads, no waiting rooms, no credits. Small files finish in under a second.</p></div><div class="feat"><h3>📱 Works everywhere</h3><p>Any modern browser on desktop or mobile. Installable as an app, works offline after first load.</p></div><div class="feat"><h3>♾️ Unlimited &amp; free</h3><p>No sign-up, no daily caps. Free outputs carry a small footer — Pro removes it.</p></div></div></section>
+<section class="faq-wrap" id="faq"><div class="section-head" style="margin-bottom:26px;"><span class="eyebrow">FAQ</span><h2 class="section-title">Questions, answered</h2></div><div class="faq"><details open><summary>Do my files leave my device?</summary><div class="a">No. Every tool runs 100% client-side in your browser. Your PDFs are processed in memory and never uploaded to any server.</div></details><details><summary>Is it really free?</summary><div class="a">Yes — unlimited free use with no account. Free PDF outputs carry a small “Created with APEXPDF” footer; Pro removes it for clean documents.</div></details><details><summary>How do I edit existing PDF text?</summary><div class="a">Open Edit PDF, drop your file, then click any text line — it loads into the replacement box below the toolbar. Edit the text, hit Apply, and the change is baked in instantly. Use Undo if you make a mistake.</div></details><details><summary>What about scanned PDFs?</summary><div class="a">Scans are images, not text. Use OCR Text to recognize the words first (English, Spanish, French, German and more), then copy or download the result.</div></details><details><summary>Is there a file size limit?</summary><div class="a">Browsers comfortably handle files up to ~100 MB. Very large or image-heavy PDFs may be slower on phones — try Compress PDF or split the file first.</div></details><details><summary>Does it work offline?</summary><div class="a">After your first visit the app shell is cached, and all processing is local — so core tools keep working with a flaky connection. CDN libraries need one online load first.</div></details></div></section>
 <section class="cta-wrap"><div class="cta"><h2>Your PDFs, handled.</h2><p>Drop a file and finish in seconds — private, free, no sign-up.</p><button type="button" onclick="document.getElementById('heroDrop').scrollIntoView({behavior:'smooth',block:'center'})">Process a PDF now</button></div></section>
 </main>
 
@@ -663,6 +664,24 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <div class="msg" aria-live="polite"></div>
 </div></div>
 
+<div class="modal" id="m-pro"><div class="box">
+    <button class="mx" data-close>&times;</button>
+    <h2>APEXPDF Pro 👑</h2><p class="sub">Free outputs carry a small “Created with APEXPDF” footer. Pro removes it — clean documents, same private in-browser processing.</p>
+    <div class="row" style="margin-top:0;">
+        <button type="button" class="go" id="buyMonthly" style="margin-top:0;">Pro Monthly</button>
+        <button type="button" class="ghost" id="buyYearly">Pro Yearly (−20%)</button>
+    </div>
+    <div class="row">
+        <input type="text" id="licenseKey" placeholder="License key e.g. APEX-XXXX-XXXX-XXXX" aria-label="License key" style="text-transform:uppercase;">
+        <button type="button" class="ghost" id="activateBtn">Activate</button>
+    </div>
+    <div class="row" id="licenseRow" style="display:none;">
+        <span class="msg ok" id="licenseStatus" style="margin:0;"></span>
+        <button type="button" class="ghost" id="removeLicenseBtn">Remove</button>
+    </div>
+    <div class="msg" id="proMsg" aria-live="polite"></div>
+</div></div>
+
 <div class="modal" id="m-merge"><div class="box">
     <button class="mx" data-close>&times;</button>
     <h2>Merge PDFs</h2><p class="sub">Select 2 or more PDFs — they'll be joined in order.</p>
@@ -834,7 +853,9 @@ async function engineSplit(file) {
         const one = await PDFLib.PDFDocument.create();
         const [pg] = await one.copyPages(src, [i]);
         one.addPage(pg);
-        zip.file('page-' + (i + 1) + '.pdf', await one.save());
+        let pb = await one.save();
+        if (freeStampNeeded()) pb = await stampFreePdfBytes(pb);
+        zip.file('page-' + (i + 1) + '.pdf', pb);
     }
     return zip.generateAsync({ type: 'blob' });
 }
@@ -1051,6 +1072,46 @@ async function engineEdit(fd) {
     }
     return doc.save();
 }
+/* ============ PLANS: free outputs carry a footer stamp, Pro is clean ============ */
+// Paste Lemon Squeezy checkout URLs here when ready (empty = buttons show setup note)
+const CHECKOUT = { monthly: '', yearly: '' };
+function getLicense() {
+    try { return JSON.parse(localStorage.getItem('apex-license') || 'null'); }
+    catch (e) { return null; }
+}
+function isPro() {
+    const l = getLicense();
+    return !!(l && l.plan === 'pro' && l.key);
+}
+function freeStampNeeded() { return !isPro(); }
+/* discreet footer stamp for free-tier PDFs */
+async function stampFreePdfBytes(bytes) {
+    const d = await _loadPdf(bytes);
+    const font = await d.embedFont(PDFLib.StandardFonts.Helvetica);
+    const label = 'Created with APEXPDF';
+    const size = 8;
+    d.getPages().forEach(page => {
+        const { width } = page.getSize();
+        const tw = font.widthOfTextAtSize(label, size);
+        page.drawText(label, {
+            x: Math.max(8, width - tw - 12), y: 12, size, font,
+            color: PDFLib.rgb(0.55, 0.55, 0.58)
+        });
+    });
+    return d.save();
+}
+function validateLicenseKey(key) {
+    const k = String(key || '').trim().toUpperCase();
+    // Format APEX-XXXX-XXXX-XXXX (letters/digits). Server-side verification
+    // can replace this check later — see LEMON_API_KEY below.
+    if (!/^APEX-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(k)) {
+        return { ok: false, error: 'That key does not look right — format APEX-XXXX-XXXX-XXXX.' };
+    }
+    return { ok: true, plan: 'pro' };
+}
+// Optional: Lemon Squeezy license API key for server-grade verification.
+// Static hosting cannot keep secrets — wire this through a tiny backend later.
+const LEMON_API_KEY = '';
 async function buildOutput(endpoint, fd) {
     const F = k => fd.get(k);
     let bytes;
@@ -1062,9 +1123,10 @@ async function buildOutput(endpoint, fd) {
         case 'extract': bytes = await engineExtract(F('file'), F('pages')); break;
         case 'reorder': bytes = await engineReorder(F('file'), F('order')); break;
         case 'watermark': bytes = await engineWatermark(F('file'), String(F('text') || 'APEXPDF').slice(0, 60), Math.min(1, Math.max(0.05, parseFloat(F('opacity')) || 0.3))); break;
-        case 'edit': return new Blob([await engineEdit(fd)], { type: 'application/pdf' });
+        case 'edit': bytes = await engineEdit(fd); break;
         default: throw new Error('Unknown tool');
     }
+    if (freeStampNeeded()) bytes = await stampFreePdfBytes(bytes);
     return new Blob([bytes], { type: 'application/pdf' });
 }
 
@@ -1121,7 +1183,8 @@ function wireDz(modalId) {
         try {
             const orig = f.size;
             const bytes = await engineCompress(f, p => { if (fill) fill.style.width = Math.round(p * 100) + '%'; });
-            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const finalBytes = freeStampNeeded() ? await stampFreePdfBytes(bytes) : bytes;
+            const blob = new Blob([finalBytes], { type: 'application/pdf' });
             const saved = Math.max(0, Math.round((1 - blob.size / orig) * 100));
             dl(blob, f.name.replace(/\.pdf$/i, '') + '-compressed.pdf');
             msg.textContent = 'Done! ' + saved + '% smaller — download started.'; msg.className = 'msg ok';
@@ -1144,7 +1207,8 @@ function wireDz(modalId) {
         msg.textContent = 'Adding numbers…'; msg.className = 'msg busy';
         try {
             const bytes = await enginePageNumbers(f, document.getElementById('pnPos').value, document.getElementById('pnStyle').value, document.getElementById('pnStart').value);
-            dl(new Blob([bytes], { type: 'application/pdf' }), f.name.replace(/\.pdf$/i, '') + '-numbered.pdf');
+            const finalBytes = freeStampNeeded() ? await stampFreePdfBytes(bytes) : bytes;
+            dl(new Blob([finalBytes], { type: 'application/pdf' }), f.name.replace(/\.pdf$/i, '') + '-numbered.pdf');
             msg.textContent = 'Done! Download started.'; msg.className = 'msg ok';
             toast('Page numbers added.');
         } catch (err) { msg.textContent = err.message; msg.className = 'msg err'; }
@@ -1546,7 +1610,8 @@ function extractPageLines(textContent) {
                 page.drawImage(bytes, { x: 0, y: 0, width: bytes.width, height: bytes.height });
             }
             const out = await doc.save();
-            dl(new Blob([out], { type: 'application/pdf' }), 'apexpdf-images.pdf');
+            const finalOut = freeStampNeeded() ? await stampFreePdfBytes(out) : out;
+            dl(new Blob([finalOut], { type: 'application/pdf' }), 'apexpdf-images.pdf');
             msg.textContent = 'Done! ' + files.length + ' page(s) created.'; msg.className = 'msg ok';
         } catch (err) { msg.textContent = err.message; msg.className = 'msg err'; }
         finally { this.disabled = false; }
@@ -2378,6 +2443,44 @@ document.getElementById('dlOcrBtn').onclick = () => {
 };
 
 document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ============ PRO / LICENSE ============ */
+function paintPlan() {
+    const pro = isPro();
+    const badge = document.getElementById('planBadge');
+    const btn = document.getElementById('proBtn');
+    if (badge) badge.style.display = pro ? '' : 'none';
+    if (btn) btn.style.display = pro ? 'none' : '';
+    const row = document.getElementById('licenseRow');
+    const st = document.getElementById('licenseStatus');
+    const l = getLicense();
+    if (row) row.style.display = (pro && l) ? 'flex' : 'none';
+    if (st && l) st.textContent = 'Pro active · ' + l.key;
+}
+function proSay(t, cls) { const m = document.getElementById('proMsg'); if (m) { m.textContent = t; m.className = 'msg ' + cls; } }
+document.getElementById('activateBtn').onclick = () => {
+    const v = document.getElementById('licenseKey').value;
+    const r = validateLicenseKey(v);
+    if (!r.ok) { proSay(r.error, 'err'); return; }
+    try { localStorage.setItem('apex-license', JSON.stringify({ key: v.trim().toUpperCase(), plan: 'pro', at: Date.now() })); } catch (e) {}
+    document.getElementById('licenseKey').value = '';
+    proSay('Pro activated — outputs are now watermark-free.', 'ok');
+    toast('Pro activated.');
+    paintPlan();
+};
+document.getElementById('removeLicenseBtn').onclick = () => {
+    try { localStorage.removeItem('apex-license'); } catch (e) {}
+    proSay('License removed — free tier.', 'busy');
+    paintPlan();
+};
+function buyGo(kind) {
+    const url = CHECKOUT[kind];
+    if (!url) { proSay('Checkout is being connected — check back soon.', 'busy'); return; }
+    window.open(url, '_blank', 'noopener');
+}
+document.getElementById('buyMonthly').onclick = () => buyGo('monthly');
+document.getElementById('buyYearly').onclick = () => buyGo('yearly');
+paintPlan();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
 
 /* ---- 3D tilt on tool cards (desktop, motion-safe only) ---- */
