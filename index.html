@@ -969,6 +969,19 @@ async function engineEdit(fd) {
         }
         return out;
     };
+    // Shrink-to-fit: reduce size until the text fits the original box width,
+    // so replacements visually match the original line instead of overflowing it
+    const fitLines = (text, f, size, maxW) => {
+        let sz = size, lns = wrapText(text, f, sz, maxW);
+        for (let k = 0; k < 16; k++) {
+            let mw = 0;
+            for (const ln of lns) mw = Math.max(mw, f.widthOfTextAtSize(ln, sz));
+            if (mw <= maxW || sz <= 4) break;
+            sz = Math.max(4, sz - 0.5);
+            lns = wrapText(text, f, sz, maxW);
+        }
+        return { lns, sz };
+    };
     const drawUnderline = (page, f, ln, x, y, size, color) => {
         const uw = f.widthOfTextAtSize(ln, size);
         page.drawRectangle({ x, y: y - size * 0.18, width: uw, height: Math.max(0.6, size * 0.055), color });
@@ -990,11 +1003,12 @@ async function engineEdit(fd) {
             if (newText.trim().length) {
                 const f = pickFont(e);
                 const col = hexToRgb(e.color || '#111111');
+                const fit = fitLines(newText, f, size, cw);
                 let ly = baseY;
-                for (const ln of wrapText(newText, f, size, cw)) {
-                    page.drawText(ln, { x: px, y: ly, size, font: f, color: col });
-                    if (e.underline) drawUnderline(page, f, ln, px, ly, size, col);
-                    ly -= size * 1.18;
+                for (const ln of fit.lns) {
+                    page.drawText(ln, { x: px, y: ly, size: fit.sz, font: f, color: col });
+                    if (e.underline) drawUnderline(page, f, ln, px, ly, fit.sz, col);
+                    ly -= fit.sz * 1.18;
                 }
             }
         } else if (e.type === 'text') {
@@ -1002,11 +1016,12 @@ async function engineEdit(fd) {
             const f = pickFont(e);
             const col = hexToRgb(e.color);
             const cw2 = Math.max(40, width - px - 16);
-            let ly = py - size * 0.3;
-            for (const ln of wrapText(String(e.text == null ? '' : e.text).slice(0, 800), f, size, cw2)) {
-                page.drawText(ln, { x: px, y: ly, size, font: f, color: col });
-                if (e.underline) drawUnderline(page, f, ln, px, ly, size, col);
-                ly -= size * 1.18;
+            const fit2 = fitLines(String(e.text == null ? '' : e.text).slice(0, 800), f, size, cw2);
+            let ly = py - fit2.sz * 0.3;
+            for (const ln of fit2.lns) {
+                page.drawText(ln, { x: px, y: ly, size: fit2.sz, font: f, color: col });
+                if (e.underline) drawUnderline(page, f, ln, px, ly, fit2.sz, col);
+                ly -= fit2.sz * 1.18;
             }
         } else if (e.type === 'image') {
             const imf = imgMap[e.imageRef];
