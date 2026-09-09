@@ -538,6 +538,7 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
         <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase Area</button>
         <span style="flex:1;"></span>
         <button type="button" class="edk" id="undoBtn" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
+        <button type="button" class="edk" id="redoBtn" disabled title="Redo">&#8631;&nbsp; Redo</button>
         <button class="go edk" id="dlEditedBtn" disabled>Download</button>
     </div>
     <div class="ed-strip">
@@ -552,6 +553,10 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
             <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
+            <button type="button" class="ghost" id="repNl" title="Move left (Shift = 10pt)" style="padding:8px 10px;">&#8592;</button>
+            <button type="button" class="ghost" id="repNr" title="Move right (Shift = 10pt)" style="padding:8px 10px;">&#8594;</button>
+            <button type="button" class="ghost" id="repNu" title="Move up (Shift = 10pt)" style="padding:8px 10px;">&#8593;</button>
+            <button type="button" class="ghost" id="repNd" title="Move down (Shift = 10pt)" style="padding:8px 10px;">&#8595;</button>
             <button type="button" class="ghost" id="repErase" title="Delete this entire line">Erase line</button>
         </div>
         <div class="row" id="repPanel" style="display:none;">
@@ -1009,7 +1014,9 @@ async function engineEdit(fd) {
             const size = Math.min(200, Math.max(4, parseFloat(e.size) || 12));
             const baseY = height * (1 - (parseFloat(e.y) || 0));
             const cw = Math.min(width, Math.max(2, (parseFloat(e.w) || 0.1) * width));
-            page.drawRectangle({ x: px - 1.5, y: baseY - size * 0.28, width: cw + 3, height: size * 1.22, color: PDFLib.rgb(1, 1, 1) });
+            const bTop = baseY + size * 0.94;
+            const bh = e.h ? Math.max(size * 1.22, e.h * height) : size * 1.22;
+            page.drawRectangle({ x: px - 1.5, y: bTop - bh, width: cw + 3, height: bh, color: PDFLib.rgb(1, 1, 1) });
             const newText = String(e.text == null ? '' : e.text).slice(0, 800);
             if (newText.trim().length) {
                 const f = pickFont(e);
@@ -1567,6 +1574,12 @@ const edMsg = editCard.querySelector('.msg');
 
 let edState = { file: null, doc: null, page: 0, pageCount: 0, mode: 'replace', zoom: 1, editedBlob: null, cctx: null, vpScale: 1 };
 const undoStack = [];
+const redoStack = [];
+function syncUndoBtns() {
+    document.getElementById('undoBtn').disabled = !undoStack.length;
+    const rb = document.getElementById('redoBtn');
+    if (rb) rb.disabled = !redoStack.length;
+}
 
 (function wireEditDz() {
     const dz = editCard.querySelector('.dz');
@@ -1588,7 +1601,7 @@ edInput.addEventListener('change', async () => {
         edState.pageCount = edState.doc.numPages;
         edState.page = 0;
         edState.zoom = 1; zLabel.textContent = 'Fit 100%';
-        edState.editedBlob = null; undoStack.length = 0; document.getElementById('undoBtn').disabled = true;
+        edState.editedBlob = null; undoStack.length = 0; redoStack.length = 0; syncUndoBtns();
         editor.classList.add('open');
         document.getElementById('dzWrap').style.display = 'none';
         document.getElementById('edTabName').textContent = f.name;
@@ -1727,6 +1740,27 @@ async function loadTextLayer(pageProxy, vp) {
                 lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt, family: r.family || 'sans', bold: !!r.bold, italic: !!r.italic, _fams: [r.family || 'sans'] });
             }
         }
+        /* group adjacent lines into paragraphs (PDFelement-style block select) */
+        const paras = [];
+        for (const ln of lines) {
+            const P = paras[paras.length - 1];
+            const vGap = P ? (ln.yBase - P.lastY) : 99; // yBase grows downward
+            const sameSize = P && Math.abs(ln.sizePt - P.sizePt) / Math.max(P.sizePt, 1) < 0.25;
+            const sameX = P && Math.abs(ln.x - P.x) < 0.03;
+            if (P && vGap > 0 && vGap < Math.max(P.h, ln.h) * 1.9 && sameSize && sameX) {
+                P.lines.push(ln);
+                P.text += '\n' + ln.text;
+                P.w = Math.max(P.w, ln.x + ln.w - P.x);
+                P.hFrac = (ln.yBase - P.yBase) + ln.h * 1.15;
+                P.lastY = ln.yBase;
+                ln.para = P;
+            } else {
+                const NP = { lines: [ln], text: ln.text, x: ln.x, yBase: ln.yBase, w: ln.w, hFrac: ln.h * 1.15, sizePt: ln.sizePt, family: ln.family, bold: ln.bold, italic: ln.italic, lastY: ln.yBase, x0: ln.x, y0: ln.yBase, ox: 0, oy: 0, els: [] };
+                ln.para = NP;
+                paras.push(NP);
+            }
+            ln.x0 = ln.x; ln.y0 = ln.yBase;
+        }
         for (const item of lines) {
             item.el = document.createElement('div');
             item.el.className = 'tl';
@@ -1739,6 +1773,7 @@ async function loadTextLayer(pageProxy, vp) {
             item.el.addEventListener('dblclick', ev => { ev.stopPropagation(); selectLine(item); });
             holder.appendChild(item.el);
             edState.textItems.push(item);
+            item.para.els.push(item.el);
         }
         if (edState.mode === 'replace' && !lines.length && edMsg.className === 'msg') {
             edMsg.textContent = 'No selectable text detected on this page (it may be a scan) — use Add Text or Erase Area instead.';
@@ -1815,31 +1850,54 @@ function commitNewText(el, xFrac, yFrac, sizePt) {
         bold: fmtState('edBold'), italic: fmtState('edItalic'), underline: fmtState('edUnder')
     });
 }
+function positionTl(l) {
+    if (!l.el) return;
+    l.el.style.left = (l.x * 100) + '%';
+    l.el.style.top = ((l.yBase - l.h * 0.88) * 100) + '%';
+    l.el.style.width = (l.w * 100) + '%';
+    l.el.style.height = (l.h * 1.15 * 100) + '%';
+}
 function selectLine(item) {
     try {
-    if (!item || !item.el || !item.el.isConnected) return;
-    // Block switching while another line has unapplied changes in the panel
-    if (edState.selItem && edState.selItem !== item && repPanelDirty()) {
-        toast('Apply or Cancel first.');
-        return;
-    }
-    if (edState.selItem && edState.selItem.el) edState.selItem.el.classList.remove('sel');
-    edState.selItem = item;
-    const el = item.el;
-    el.classList.add('sel');
-    item._col = sampleTextColor(item);
-    try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(item._col) ? item._col : '#111111'; } catch (e) {}
-    setFmt('repBold', item.bold); setFmt('repItalic', item.italic); setFmt('repUnder', false);
-        try { document.getElementById('repFont').value = item.family || 'sans'; } catch (e) {}
+        if (!item || !item.el || !item.el.isConnected) return;
+        const t = item.para || item;
+        if (!t.els) t.els = [t.el];
+        // Block switching while another block has unapplied changes in the panel
+        if (edState.selItem && edState.selItem !== t && repPanelDirty()) {
+            toast('Apply or Cancel first.');
+            return;
+        }
+        deselectLine();
+        edState.selItem = t;
+        t.els.forEach(e => e.classList.add('sel'));
+        t._col = sampleTextColor(item);
+        try { document.getElementById('repColor').value = /^#[0-9a-f]{6}$/i.test(t._col) ? t._col : '#111111'; } catch (e) {}
+        setFmt('repBold', t.bold); setFmt('repItalic', t.italic); setFmt('repUnder', false);
+        try { document.getElementById('repFont').value = t.family || 'sans'; } catch (e) {}
         updateRepPreviewFont();
-    repSizeAdj = null;
-    document.getElementById('repSizeVal').textContent = Math.round(item.sizePt * 10) / 10;
-    const ta = document.getElementById('repText');
-    ta.value = item.text;
-    showRepPanel(true);
-    ta.focus(); ta.select();
+        repSizeAdj = null;
+        document.getElementById('repSizeVal').textContent = Math.round(t.sizePt * 10) / 10;
+        t.px0 = t.x; t.py0 = t.yBase; // position snapshot for move detection
+        const ta = document.getElementById('repText');
+        ta.value = t.text;
+        showRepPanel(true);
+        ta.focus(); ta.select();
     } catch (err) {
         edMsg.textContent = 'Could not load line: ' + err.message; edMsg.className = 'msg err';
+    }
+}
+/* nudge the selected block across the page (Shift-click = 10pt steps) */
+function nudge(dxPt, dyPt) {
+    const t = edState.selItem;
+    if (!t || !t.lines) return;
+    const pw = edState.pageWpt || 612, ph = edState.pageHpt || 792;
+    if (t.x0 == null) { t.x0 = t.x; t.y0 = t.yBase; t.ox = 0; t.oy = 0; }
+    t.ox += dxPt / pw; t.oy += dyPt / ph;
+    t.x = t.x0 + t.ox; t.yBase = t.y0 + t.oy;
+    for (const l of t.lines) {
+        if (l.x0 == null) { l.x0 = l.x; l.y0 = l.yBase; }
+        l.x = l.x0 + t.ox; l.yBase = l.y0 + t.oy;
+        positionTl(l);
     }
 }
 /* ---- replacement panel helpers ---- */
@@ -1853,8 +1911,9 @@ function showRepPanel(show) {
     document.getElementById('repPanel').style.display = show ? 'flex' : 'none';
 }
 function deselectLine() {
-    const it = edState.selItem;
-    if (it && it.el) it.el.classList.remove('sel');
+    const t = edState.selItem;
+    if (t && t.els) t.els.forEach(e => e.classList.remove('sel'));
+    else if (t && t.el) t.el.classList.remove('sel');
     edState.selItem = null;
     repSizeAdj = null;
     showRepPanel(false);
@@ -1875,15 +1934,16 @@ function applyRepLine() {
     const b = fmtState('repBold'), i = fmtState('repItalic'), u = fmtState('repUnder');
     deselectLine();
     edState._justCommitted = Date.now();
+    const moved = (it.px0 != null) && (Math.abs(it.x - it.px0) > 1e-9 || Math.abs(it.yBase - it.py0) > 1e-9);
     if (!newText.trim()) {
         // Empty replacement = erase the line
         bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
         return;
     }
-    if (newText.trim() === it.text.trim()) { edMsg.textContent = 'No changes.'; edMsg.className = 'msg'; return; }
+    if (!moved && newText.trim() === it.text.trim()) { edMsg.textContent = 'No changes.'; edMsg.className = 'msg'; return; }
     bakeNow({
         type: 'replace', page: edState.page,
-        x: it.x, y: it.yBase, w: it.w,
+        x: it.x, y: it.yBase, w: it.w, h: it.hFrac,
         size: usedSize, family: fam,
         text: newText.slice(0, 800), color: col,
         bold: b, italic: i, underline: u,
@@ -1979,11 +2039,14 @@ function setMode(m) {
     holder.classList.toggle('mode-erase', m === 'erase');
 }
 
+[['repNl', -1, 0], ['repNr', 1, 0], ['repNu', 0, 1], ['repNd', 0, -1]].forEach(([id, dx, dy]) => {
+    document.getElementById(id).onclick = e => nudge(dx * (e.shiftKey ? 10 : 1), dy * (e.shiftKey ? 10 : 1));
+});
 document.getElementById('repErase').onclick = () => {
     const it = edState.selItem;
     if (!it || !it.el) return;
     deselectLine();
-    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
+    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, h: it.hFrac, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
 };
 document.getElementById('repApply').onclick = () => applyRepLine();
 document.getElementById('repCancel').onclick = () => deselectLine();
@@ -2073,6 +2136,7 @@ async function bakeNow(edit, extraImgs) {
         edMsg.textContent = 'Saving change…'; edMsg.className = 'msg busy';
         undoStack.push(edState.file);
         if (undoStack.length > 15) undoStack.shift();
+        redoStack.length = 0; syncUndoBtns();
         const fd = new FormData();
         fd.append('file', edState.file);
         fd.append('edits', JSON.stringify([edit]));
@@ -2090,11 +2154,13 @@ async function bakeNow(edit, extraImgs) {
         edMsg.textContent = 'Saved ✓'; edMsg.className = 'msg ok';
         setTimeout(() => { if (edMsg.textContent === 'Saved ✓') { edMsg.textContent = ''; edMsg.className = 'msg'; } }, 1500);
     } catch (err) { edMsg.textContent = err.message; edMsg.className = 'msg err'; }
-    finally { undoBtn.disabled = !undoStack.length; }
+    finally { syncUndoBtns(); }
 }
 document.getElementById('undoBtn').onclick = async function () {
     if (!undoStack.length) return;
     const prev = undoStack.pop();
+    redoStack.push(edState.file);
+    if (redoStack.length > 15) redoStack.shift();
     this.disabled = true;
     edMsg.textContent = 'Undoing…'; edMsg.className = 'msg busy';
     try {
@@ -2104,7 +2170,23 @@ document.getElementById('undoBtn').onclick = async function () {
         edFname.textContent = 'Preview updated — ' + edState.pageCount + ' pages';
         edMsg.textContent = 'Undone'; edMsg.className = 'msg ok';
     } catch (err) { edMsg.textContent = err.message; edMsg.className = 'msg err'; }
-    finally { this.disabled = !undoStack.length; }
+    finally { syncUndoBtns(); }
+};
+document.getElementById('redoBtn').onclick = async function () {
+    if (!redoStack.length) return;
+    const next = redoStack.pop();
+    undoStack.push(edState.file);
+    if (undoStack.length > 15) undoStack.shift();
+    this.disabled = true;
+    edMsg.textContent = 'Redoing…'; edMsg.className = 'msg busy';
+    try {
+        await reloadFromBlob(next);
+        edState.editedBlob = next;
+        document.getElementById('dlEditedBtn').disabled = false;
+        edFname.textContent = 'Preview updated — ' + edState.pageCount + ' pages';
+        edMsg.textContent = 'Redone'; edMsg.className = 'msg ok';
+    } catch (err) { edMsg.textContent = err.message; edMsg.className = 'msg err'; }
+    finally { syncUndoBtns(); }
 };
 
 document.getElementById('dlEditedBtn').onclick = function () {
