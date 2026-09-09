@@ -516,8 +516,9 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
             <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
             <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#241C10;">12</span>
             <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
-            <select id="repFont" title="Font family (auto-detected)" style="max-width:130px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="custom">Custom font…</option></select>
+            <select id="repFont" title="Font family (auto-detected)" style="max-width:130px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="custom">Custom font…</option><option value="auto">Auto-match webfont</option></select>
             <input type="file" id="repFontFile" accept=".ttf,.otf,.ttc" hidden>
+            <button type="button" class="ghost" id="repAutoFont" title="Detect this line's font and download a free match automatically" style="padding:8px 11px;">&#11015; Auto</button>
             <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
@@ -936,20 +937,27 @@ async function engineEdit(fd) {
         r: await doc.embedFont(SF.Courier), b: await doc.embedFont(SF.CourierBold),
         i: await doc.embedFont(SF.CourierOblique), bi: await doc.embedFont(SF.CourierBoldOblique)
     };
-    // User-uploaded font (sent as 'fontCustom' in the form data). One file covers
-    // all four slots — letterforms stay exact; weight follows the uploaded file.
+    // Attached fonts: 4-variant auto set (fontCustomR/B/I/BI) or single manual file
     let customFam = null;
-    if (fd.get('fontCustom')) {
+    const gk = k => fd.get(k);
+    if (gk('fontCustomR') || gk('fontCustom')) {
         try {
-            const cf = await doc.embedFont(await fd.get('fontCustom').arrayBuffer());
-            customFam = { r: cf, b: cf, i: cf, bi: cf };
+            const emb = async b => b ? await doc.embedFont(await b.arrayBuffer()) : null;
+            if (gk('fontCustomR')) {
+                const r = await emb(gk('fontCustomR'));
+                if (!r) throw new Error('bad font');
+                customFam = { r, b: (await emb(gk('fontCustomB'))) || r, i: (await emb(gk('fontCustomI'))) || r, bi: (await emb(gk('fontCustomBI'))) || r };
+            } else {
+                const cf = await emb(gk('fontCustom'));
+                customFam = { r: cf, b: cf, i: cf, bi: cf };
+            }
         } catch (err) {
             throw new Error('That font file could not be used — please pick a .ttf or .otf file.');
         }
     }
     const pickFont = e => {
-        if (e.family === 'custom') {
-            if (!customFam) throw new Error('Custom font not attached — pick the font file again.');
+        if (e.family === 'custom' || e.family === 'auto') {
+            if (!customFam) throw new Error('Font not attached — pick it again.');
             return e.bold && e.italic ? customFam.bi : e.bold ? customFam.b : e.italic ? customFam.i : customFam.r;
         }
         const fam = F[e.family] || F['sans'];
@@ -1675,7 +1683,9 @@ async function loadTextLayer(pageProxy, vp) {
             else if (/serif|times|georgia|garamond|palatino|bookman|book antiqua|minion|cambria|charter|didot|calisto|nimbusroman|liberationserif|freeserif/.test(s)) family = 'serif';
             const bold = /bold|black|heavy|demibold|semibold|\b700\b|\b800\b|\b900\b/.test(s);
             const italic = /italic|oblique|cursive/.test(s);
-            return { family, bold, italic };
+            // Raw detected name (subset prefix stripped) for auto font matching
+            const rawName = String(st.fontFamily || it.fontName || '').replace(/^[A-Z0-9]{6}\+/i, '').trim();
+            return { family, bold, italic, raw: rawName };
         };
         const raw = [];
         for (const it of tc.items) {
@@ -1691,7 +1701,7 @@ async function loadTextLayer(pageProxy, vp) {
                 w: ((it.width || 0) * vp.scale) / vp.width,
                 h: fh / vp.height,
                 sizePt: fh / vp.scale,               // font size in PDF points
-                family: sn.family, bold: sn.bold, italic: sn.italic
+                family: sn.family, bold: sn.bold, italic: sn.italic, fontRaw: sn.raw
             };
             if (item.w <= 0.001) continue;
             raw.push(item);
@@ -1721,7 +1731,7 @@ async function loadTextLayer(pageProxy, vp) {
                     L.family = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
                 }
             } else {
-                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt, family: r.family || 'sans', bold: !!r.bold, italic: !!r.italic, _fams: [r.family || 'sans'] });
+                lines.push({ text: r.text.trim(), x: r.x, yBase: r.yBase, w: r.w, h: r.h, sizePt: r.sizePt, family: r.family || 'sans', bold: !!r.bold, italic: !!r.italic, fontRaw: r.fontRaw || '', _fams: [r.family || 'sans'] });
             }
         }
         /* group adjacent lines into paragraphs (PDFelement-style block select) */
@@ -1739,7 +1749,7 @@ async function loadTextLayer(pageProxy, vp) {
                 P.lastY = ln.yBase;
                 ln.para = P;
             } else {
-                const NP = { lines: [ln], text: ln.text, x: ln.x, yBase: ln.yBase, w: ln.w, hFrac: ln.h * 1.15, sizePt: ln.sizePt, family: ln.family, bold: ln.bold, italic: ln.italic, lastY: ln.yBase, x0: ln.x, y0: ln.yBase, ox: 0, oy: 0, els: [] };
+                const NP = { lines: [ln], text: ln.text, x: ln.x, yBase: ln.yBase, w: ln.w, hFrac: ln.h * 1.15, sizePt: ln.sizePt, family: ln.family, bold: ln.bold, italic: ln.italic, fontRaw: ln.fontRaw || '', lastY: ln.yBase, x0: ln.x, y0: ln.yBase, ox: 0, oy: 0, els: [] };
                 ln.para = NP;
                 paras.push(NP);
             }
@@ -1908,6 +1918,11 @@ function applyRepLine() {
     if (document.getElementById('repFont').value === 'custom' && !customFontBytes) {
         edMsg.textContent = 'Pick your .ttf/.otf font file first.'; edMsg.className = 'msg err';
         document.getElementById('repFontFile').click();
+        return;
+    }
+    if (document.getElementById('repFont').value === 'auto' && !autoFontSet) {
+        edMsg.textContent = 'Downloading the matched font first…'; edMsg.className = 'msg busy';
+        autoMatchFont(true);
         return;
     }
     const ta = document.getElementById('repText');
@@ -2084,16 +2099,97 @@ async function loadCustomFont(file) {
 function updateRepPreviewFont() {
     const ta = document.getElementById('repText');
     if (!ta) return;
-    ta.style.fontFamily = (document.getElementById('repFont').value === 'custom' && customFontBytes)
-        ? "'ApexCustomFont',sans-serif" : '';
+    const v = document.getElementById('repFont').value;
+    ta.style.fontFamily = (v === 'custom' && customFontBytes) ? "'ApexCustomFont',sans-serif"
+        : (v === 'auto' && autoFontSet) ? "'ApexAutoFont',sans-serif" : '';
 }
 document.getElementById('repFontFile').addEventListener('change', e => loadCustomFont(e.target.files[0]));
 document.getElementById('repFont').addEventListener('change', () => {
-    if (document.getElementById('repFont').value === 'custom' && !customFontBytes) {
+    const v = document.getElementById('repFont').value;
+    if (v === 'custom' && !customFontBytes) {
         document.getElementById('repFontFile').click();
+    } else if (v === 'auto' && !autoFontSet) {
+        autoMatchFont();
     }
     updateRepPreviewFont();
 });
+document.getElementById('repAutoFont').onclick = () => autoMatchFont();
+/* ---- auto font match: detect line font, download free twin, embed it ---- */
+let autoFontSet = null; // {id,label,r,b,i,bi} ArrayBuffers, session cache
+function twinCandidates(raw) {
+    let s = String(raw || '').replace(/^[A-Z0-9]{6}\+/i, '');
+    let prev;
+    do {
+        prev = s;
+        s = s.replace(/[-,_\s]*(BoldItalic|Bold|Italic|Oblique|Regular|Medium|SemiBold|DemiBold|Light|Black|Heavy|Condensed|MT|PSMT|PS|CID|Identity-H)$/i, '');
+    } while (s !== prev);
+    const base = s.replace(/[^a-z0-9]+/gi, '').toLowerCase();
+    // Metric-compatible twins for fonts Google Fonts does not carry
+    const twins = { arial: 'arimo', helvetica: 'arimo', helv: 'arimo', times: 'tinos', timesnewroman: 'tinos', courier: 'cousine', couriernew: 'cousine', georgia: 'gelasio', garamond: 'ebgaramond', cambria: 'caladea', calibri: 'carlito', candara: 'carlito' };
+    const out = [];
+    if (base) out.push(base);
+    if (twins[base] && twins[base] !== base) out.push(twins[base]);
+    return out;
+}
+async function fetchGwfhSet(id) {
+    const url = 'https://gwfh.mranftl.com/api/fonts/' + encodeURIComponent(id) + '?download=zip&subsets=latin&variants=regular,italic,700,700italic&formats=ttf';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('no pack');
+    const zip = await JSZip.loadAsync(await r.arrayBuffer());
+    const files = Object.keys(zip.files).filter(n => /\.ttf$/i.test(n) && !zip.files[n].dir);
+    if (!files.length) throw new Error('empty pack');
+    const isB = n => /bold|700|black|heavy/i.test(n);
+    const isI = n => /italic|oblique/i.test(n);
+    const fBI = files.find(n => isB(n) && isI(n));
+    const fB = files.find(n => isB(n) && !isI(n));
+    const fI = files.find(n => !isB(n) && isI(n));
+    const fR = files.find(n => !isB(n) && !isI(n)) || files[0];
+    const get = async n => n ? (await zip.files[n].async('arraybuffer')).slice(0) : null;
+    const R = await get(fR);
+    if (!R) throw new Error('empty pack');
+    // Validate before accepting
+    await (await PDFLib.PDFDocument.create()).embedFont(R.slice(0));
+    return { id, label: id, r: R, b: await get(fB), i: await get(fI), bi: await get(fBI) };
+}
+async function autoMatchFont(andApply) {
+    const t = edState.selItem;
+    if (!t) { toast('Select a line first.'); return; }
+    const raw = t.fontRaw || '';
+    const btn = document.getElementById('repAutoFont');
+    btn.disabled = true;
+    edMsg.textContent = 'Finding a free match for ' + (raw || 'this font') + '…';
+    edMsg.className = 'msg busy';
+    try {
+        const cands = twinCandidates(raw);
+        if (!cands.length) throw new Error('unknown font');
+        let set = null, lastErr = null;
+        for (const id of cands) {
+            try { set = await fetchGwfhSet(id); break; }
+            catch (e) { lastErr = e; }
+        }
+        if (!set) throw lastErr || new Error('no match');
+        autoFontSet = set;
+        try {
+            const face = new FontFace('ApexAutoFont', set.r.slice(0));
+            await face.load();
+            document.fonts.add(face);
+        } catch (e) {}
+        const sel = document.getElementById('repFont');
+        sel.value = 'auto';
+        const opt = sel.querySelector('option[value="auto"]');
+        if (opt) opt.textContent = 'Auto (' + set.label.slice(0, 18) + ')';
+        updateRepPreviewFont();
+        toast('Matched ' + (raw || 'font') + ' → ' + set.label);
+        edMsg.textContent = 'Matched free font "' + set.label + '" — Apply to use it.';
+        edMsg.className = 'msg ok';
+        if (andApply) applyRepLine();
+    } catch (err) {
+        edMsg.textContent = 'No free match for ' + (raw || 'this font') + ' — closest built-in kept.';
+        edMsg.className = 'msg err';
+    } finally {
+        btn.disabled = false;
+    }
+}
 function stepSize(d) {
     const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
     repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
@@ -2125,8 +2221,14 @@ async function bakeNow(edit, extraImgs) {
         fd.append('file', edState.file);
         fd.append('edits', JSON.stringify([edit]));
         (extraImgs || []).forEach(o => fd.append(o.key, o.file));
-        // Attach the user-picked font whenever the edit asks for it
-        if (edit.family === 'custom' && customFontBytes) {
+        // Attach fonts whenever the edit asks for them (auto set wins, else manual file)
+        if ((edit.family === 'custom' || edit.family === 'auto') && autoFontSet && (edit.family === 'auto' || !customFontBytes)) {
+            const s = autoFontSet;
+            fd.append('fontCustomR', new Blob([s.r], { type: 'font/ttf' }), (s.label || 'match') + '-R.ttf');
+            if (s.b) fd.append('fontCustomB', new Blob([s.b], { type: 'font/ttf' }), (s.label || 'match') + '-B.ttf');
+            if (s.i) fd.append('fontCustomI', new Blob([s.i], { type: 'font/ttf' }), (s.label || 'match') + '-I.ttf');
+            if (s.bi) fd.append('fontCustomBI', new Blob([s.bi], { type: 'font/ttf' }), (s.label || 'match') + '-BI.ttf');
+        } else if (edit.family === 'custom' && customFontBytes) {
             fd.append('fontCustom', new Blob([customFontBytes], { type: 'font/ttf' }), customFontName || 'custom-font.ttf');
         }
         const out = new Blob([await engineEdit(fd)], { type: 'application/pdf' });
