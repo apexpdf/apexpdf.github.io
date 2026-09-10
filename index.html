@@ -501,10 +501,10 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     <button class="mx" data-close>&times;</button>
     <div class="ed-top">
         <div class="ed-tab"><span class="ed-dot"></span><span id="edTabName">Document</span></div>
-        <button type="button" class="modebtn active" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit All</button>
-        <button type="button" class="modebtn" id="modeText" onclick="setMode('text')">T&nbsp; Add Text</button>
-        <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Add Image</button>
-        <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase Area</button>
+        <button type="button" class="modebtn active" id="modeReplace" onclick="setMode('replace')">&#9998;&nbsp; Edit text</button>
+        <button type="button" class="modebtn" id="modeText" onclick="setMode('text')">T&nbsp; Add text</button>
+        <button type="button" class="modebtn" id="modeImage" onclick="setMode('image')">&#9635;&nbsp; Add image</button>
+        <button type="button" class="modebtn" id="modeErase" onclick="setMode('erase')">&#9003;&nbsp; Erase</button>
         <span style="flex:1;"></span>
         <button type="button" class="edk" id="undoBtn" disabled title="Undo the last change">&#8630;&nbsp; Undo</button>
         <button type="button" class="edk" id="redoBtn" disabled title="Redo">&#8631;&nbsp; Redo</button>
@@ -512,22 +512,21 @@ textarea.result:focus { outline: none; border-color: var(--acc); box-shadow: 0 0
     </div>
     <div class="ed-strip">
         <div class="row" id="repOpts" style="display:none;">
-            <span style="color:#7A6A4E;font-size:.82rem;">Click a line on the page — edit it in the box below, then <b>Apply</b> · Esc cancels</span>
-            <button type="button" class="ghost" id="repSizeDn" title="Decrease font size" style="padding:8px 10px;font-weight:700;">A&#8722;</button>
-            <span id="repSizeVal" style="min-width:32px;text-align:center;font-weight:800;font-size:.85rem;color:#241C10;">12</span>
-            <button type="button" class="ghost" id="repSizeUp" title="Increase font size" style="padding:8px 10px;font-weight:700;">A+</button>
+            <span style="color:#7A6A4E;font-size:.82rem;">Click a line, edit below, <b>Apply</b></span>
+            <select id="repSizeSel" title="Font size (Auto = detected)" style="max-width:96px;"><option value="auto" selected>Auto size</option><option value="8">8pt</option><option value="10">10pt</option><option value="12">12pt</option><option value="14">14pt</option><option value="18">18pt</option><option value="24">24pt</option><option value="36">36pt</option></select>
             <select id="repFont" title="Font family (auto-detected)" style="max-width:130px;"><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="custom">Custom font…</option><option value="auto">Auto-match webfont</option></select>
             <input type="file" id="repFontFile" accept=".ttf,.otf,.ttc" hidden>
             <button type="button" class="ghost" id="repAutoFont" title="Detect this line's font and download a free match automatically" style="padding:8px 11px;">&#11015; Auto</button>
             <button type="button" class="ghost fmt" id="repBold" title="Bold" style="font-weight:800;padding:8px 11px;">B</button>
             <button type="button" class="ghost fmt" id="repItalic" title="Italic" style="font-style:italic;font-family:Georgia,serif;padding:8px 11px;">I</button>
             <button type="button" class="ghost fmt" id="repUnder" title="Underline" style="text-decoration:underline;padding:8px 11px;">U</button>
-            <input type="color" id="repColor" value="#111111" style="width:52px;padding:4px;border:1.5px solid #35415a;border-radius:10px;">
-            <button type="button" class="ghost" id="repNl" title="Move left (Shift = 10pt)" style="padding:8px 10px;">&#8592;</button>
-            <button type="button" class="ghost" id="repNr" title="Move right (Shift = 10pt)" style="padding:8px 10px;">&#8594;</button>
-            <button type="button" class="ghost" id="repNu" title="Move up (Shift = 10pt)" style="padding:8px 10px;">&#8593;</button>
-            <button type="button" class="ghost" id="repNd" title="Move down (Shift = 10pt)" style="padding:8px 10px;">&#8595;</button>
-            <button type="button" class="ghost" id="repErase" title="Delete this entire line">Erase line</button>
+            <input type="color" id="repColor" value="#111111" style="width:44px;padding:3px;border:1.5px solid #35415a;border-radius:10px;" title="Text color">
+            <span style="display:inline-flex;gap:4px;" role="group" aria-label="Move text">
+            <button type="button" class="ghost" id="repNl" title="Move left (Shift = 10pt)" style="padding:8px 9px;">&#8592;</button>
+            <button type="button" class="ghost" id="repNr" title="Move right (Shift = 10pt)" style="padding:8px 9px;">&#8594;</button>
+            <button type="button" class="ghost" id="repNu" title="Move up (Shift = 10pt)" style="padding:8px 9px;">&#8593;</button>
+            <button type="button" class="ghost" id="repNd" title="Move down (Shift = 10pt)" style="padding:8px 9px;">&#8595;</button>
+            </span>
         </div>
         <div class="row" id="repPanel" style="display:none;">
             <textarea id="repText" rows="2" placeholder="Replacement text…" aria-label="Replacement text"></textarea>
@@ -1869,8 +1868,7 @@ function selectLine(item) {
         setFmt('repBold', t.bold); setFmt('repItalic', t.italic); setFmt('repUnder', false);
         try { document.getElementById('repFont').value = t.family || 'sans'; } catch (e) {}
         updateRepPreviewFont();
-        repSizeAdj = null;
-        document.getElementById('repSizeVal').textContent = Math.round(t.sizePt * 10) / 10;
+        document.getElementById('repSizeSel').value = 'auto';
         t.px0 = t.x; t.py0 = t.yBase; // position snapshot for move detection
         const ta = document.getElementById('repText');
         ta.value = t.text;
@@ -1909,7 +1907,6 @@ function deselectLine() {
     if (t && t.els) t.els.forEach(e => e.classList.remove('sel'));
     else if (t && t.el) t.el.classList.remove('sel');
     edState.selItem = null;
-    repSizeAdj = null;
     showRepPanel(false);
 }
 function applyRepLine() {
@@ -1928,7 +1925,8 @@ function applyRepLine() {
     const ta = document.getElementById('repText');
     const newText = ta.value.split(String.fromCharCode(160)).join(' ');
     const col = it._col || '#111111';
-    const usedSize = repSizeAdj || it.sizePt;
+    const selSize = parseFloat(document.getElementById('repSizeSel').value);
+    const usedSize = Number.isFinite(selSize) ? Math.min(96, Math.max(4, selSize)) : it.sizePt;
     const fam = document.getElementById('repFont').value || it.family || 'sans';
     const b = fmtState('repBold'), i = fmtState('repItalic'), u = fmtState('repUnder');
     deselectLine();
@@ -2041,12 +2039,6 @@ function setMode(m) {
 [['repNl', -1, 0], ['repNr', 1, 0], ['repNu', 0, 1], ['repNd', 0, -1]].forEach(([id, dx, dy]) => {
     document.getElementById(id).onclick = e => nudge(dx * (e.shiftKey ? 10 : 1), dy * (e.shiftKey ? 10 : 1));
 });
-document.getElementById('repErase').onclick = () => {
-    const it = edState.selItem;
-    if (!it || !it.el) return;
-    deselectLine();
-    bakeNow({ type: 'replace', page: edState.page, x: it.x, y: it.yBase, w: it.w, h: it.hFrac, size: it.sizePt, family: it.family || 'sans', text: '', color: '#111111', _orig: it.text });
-};
 document.getElementById('repApply').onclick = () => applyRepLine();
 document.getElementById('repCancel').onclick = () => deselectLine();
 document.getElementById('repText').addEventListener('keydown', ev => {
@@ -2054,8 +2046,7 @@ document.getElementById('repText').addEventListener('keydown', ev => {
     else if (ev.key === 'Escape') { ev.preventDefault(); deselectLine(); }
 });
 
-/* ---- font size stepper + B/I/U toggles (PDFelement-style) ---- */
-let repSizeAdj = null;
+/* ---- B/I/U toggles ---- */
 const fmtState = id => document.getElementById(id).classList.contains('on');
 ['repBold', 'repItalic', 'repUnder', 'edBold', 'edItalic', 'edUnder'].forEach(id => {
     document.getElementById(id).onclick = function () { this.classList.toggle('on'); refreshEditingStyle(); };
@@ -2189,14 +2180,6 @@ async function autoMatchFont(andApply) {
         btn.disabled = false;
     }
 }
-function stepSize(d) {
-    const cur = repSizeAdj || (parseFloat(document.getElementById('repSizeVal').textContent) || 12);
-    repSizeAdj = Math.min(96, Math.max(4, Math.round((cur + d) * 10) / 10));
-    document.getElementById('repSizeVal').textContent = repSizeAdj;
-}
-document.getElementById('repSizeDn').onclick = () => stepSize(-1);
-document.getElementById('repSizeUp').onclick = () => stepSize(1);
-
 /* ---- instant save engine: bake each change into the PDF immediately ---- */
 async function reloadFromBlob(blob) {
     const buf = await blob.arrayBuffer();
