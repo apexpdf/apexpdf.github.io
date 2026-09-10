@@ -2141,6 +2141,45 @@ async function fetchLocalSet(id) {
     try { BI = await get('BoldItalic'); } catch (e) {}
     return { id, label: id, r: R, b: B, i: I, bi: BI };
 }
+/* google/fonts fallback: guess the variable-font URL for any family.
+   Covers Roboto, Open Sans, Lato, Montserrat, Poppins, Inter… jsDelivr
+   sends CORS headers so the browser may fetch it. Failures are caught. */
+async function fetchJsdelivrGuess(raw) {
+    let s = String(raw || '').replace(/^[A-Z0-9]{6}\+/i, '');
+    let prev;
+    do {
+        prev = s;
+        s = s.replace(/[-,_\s]*(BoldItalic|Bold|Italic|Oblique|Regular|Medium|SemiBold|DemiBold|Light|Black|Heavy|Condensed|MT|PSMT|PS|CID|Identity-H)$/i, '');
+    } while (s !== prev);
+    s = s.replace(/[\s_]+/g, '');
+    if (!s) throw new Error('unknown font');
+    const folder = s.toLowerCase();
+    const stems = [];
+    [s, s.charAt(0).toUpperCase() + s.slice(1)].forEach(st => {
+        if (st && !stems.includes(st)) stems.push(st);
+    });
+    let lastErr = null;
+    for (const st of stems) {
+        for (const suffix of ['', '-Italic']) {
+            const url = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/' + folder + '/' + encodeURIComponent(st + suffix) + '%5Bwght%5D.ttf';
+            try {
+                if (suffix === '') {
+                    const r = await fetch(url);
+                    if (!r.ok) continue;
+                    const R = (await r.arrayBuffer()).slice(0);
+                    await (await PDFLib.PDFDocument.create()).embedFont(R.slice(0));
+                    let I = null;
+                    try {
+                        const ri = await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/' + folder + '/' + encodeURIComponent(st + '-Italic') + '%5Bwght%5D.ttf');
+                        if (ri.ok) I = (await ri.arrayBuffer()).slice(0);
+                    } catch (e) {}
+                    return { id: folder, label: st, r: R, b: R, i: I || R, bi: I || R };
+                }
+            } catch (e) { lastErr = e; }
+        }
+    }
+    throw lastErr || new Error('not on Google Fonts');
+}
 async function autoMatchFont(andApply) {
     const t = edState.selItem;
     if (!t) { toast('Select a line first.'); return; }
@@ -2155,6 +2194,12 @@ async function autoMatchFont(andApply) {
         let set = null, lastErr = null;
         for (const id of cands) {
             try { set = await fetchLocalSet(id); break; }
+            catch (e) { lastErr = e; }
+        }
+        if (!set) {
+            // Last resort: try the family straight from Google Fonts
+            // (variable font = exact letterforms, regular weight)
+            try { set = await fetchJsdelivrGuess(raw); }
             catch (e) { lastErr = e; }
         }
         if (!set) throw lastErr || new Error('no match');
